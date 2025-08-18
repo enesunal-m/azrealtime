@@ -92,7 +92,12 @@ func main() {
 
     mux := http.NewServeMux()
     mux.Handle("/token", s.cors(s.auth(http.HandlerFunc(s.handleToken))))
-    mux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(200); w.Write([]byte("ok")) })
+    mux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) { 
+        w.WriteHeader(200)
+        if _, err := w.Write([]byte("ok")); err != nil {
+            log.Printf("Failed to write health check response: %v", err)
+        }
+    })
 
     addr := env("ADDR", ":8080")
     log.Println("ephemeral-issuer on", addr)
@@ -107,12 +112,14 @@ func (s *server) handleToken(w http.ResponseWriter, r *http.Request) {
         http.Error(w, "mint failed", http.StatusBadGateway)
         return
     }
-    json.NewEncoder(w).Encode(TokenResponse{
+    if err := json.NewEncoder(w).Encode(TokenResponse{
         SessionID:  sessionID,
         Ephemeral:  eph,
         RegionURL:  webrtc.RegionWebRTCURL(s.region),
         Deployment: s.deployment,
-    })
+    }); err != nil {
+        log.Printf("Failed to encode token response: %v", err)
+    }
 }
 
 // Middleware: OIDC auth

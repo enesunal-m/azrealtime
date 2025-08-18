@@ -20,7 +20,7 @@ type MockServer struct {
 // NewMockServer creates a new mock server for testing
 func NewMockServer(t *testing.T) *MockServer {
 	ms := &MockServer{t: t, messages: make([]interface{}, 0)}
-	
+
 	ms.server = httptest.NewServer(http.HandlerFunc(ms.handleWebSocket))
 	return ms
 }
@@ -75,7 +75,7 @@ func (ms *MockServer) handleWebSocket(w http.ResponseWriter, r *http.Request) {
 			ExpiresAt:  1640995200,
 		},
 	}
-	
+
 	data, _ := json.Marshal(sessionCreated)
 	err = conn.Write(r.Context(), websocket.MessageText, data)
 	if err != nil {
@@ -90,7 +90,7 @@ func (ms *MockServer) handleWebSocket(w http.ResponseWriter, r *http.Request) {
 			ms.t.Errorf("failed to marshal message: %v", err)
 			continue
 		}
-		
+
 		err = conn.Write(r.Context(), websocket.MessageText, data)
 		if err != nil {
 			ms.t.Errorf("failed to write message: %v", err)
@@ -121,8 +121,10 @@ func (ms *MockServer) handleWebSocket(w http.ResponseWriter, r *http.Request) {
 				Session: map[string]interface{}{"updated": true},
 			}
 			respData, _ := json.Marshal(response)
-			conn.Write(r.Context(), websocket.MessageText, respData)
-			
+			if err := conn.Write(r.Context(), websocket.MessageText, respData); err != nil {
+				ms.t.Logf("Failed to write response: %v", err)
+			}
+
 		case "response.create":
 			// Respond with text delta and done events
 			textDelta := ResponseTextDelta{
@@ -134,7 +136,9 @@ func (ms *MockServer) handleWebSocket(w http.ResponseWriter, r *http.Request) {
 				Delta:        "Hello from mock server!",
 			}
 			deltaData, _ := json.Marshal(textDelta)
-			conn.Write(r.Context(), websocket.MessageText, deltaData)
+			if err := conn.Write(r.Context(), websocket.MessageText, deltaData); err != nil {
+				ms.t.Logf("Failed to write delta: %v", err)
+			}
 
 			textDone := ResponseTextDone{
 				Type:         "response.text.done",
@@ -145,7 +149,9 @@ func (ms *MockServer) handleWebSocket(w http.ResponseWriter, r *http.Request) {
 				Text:         "Hello from mock server!",
 			}
 			doneData, _ := json.Marshal(textDone)
-			conn.Write(r.Context(), websocket.MessageText, doneData)
+			if err := conn.Write(r.Context(), websocket.MessageText, doneData); err != nil {
+				ms.t.Logf("Failed to write done: %v", err)
+			}
 		}
 	}
 }

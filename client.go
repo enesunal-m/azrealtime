@@ -30,6 +30,7 @@ type Client struct {
     closedCh   chan struct{}       // Signals when the client is closed
 
     // Event handlers - these functions are called when corresponding events are received
+    handlerMu sync.RWMutex // Protects event handler fields
     onError              func(ErrorEvent)        // Called for API errors
     onSessionCreated     func(SessionCreated)    // Called when session is established
     onSessionUpdated     func(SessionUpdated)    // Called when session config changes
@@ -144,28 +145,60 @@ func (c *Client) Close() error {
 // Callbacks are executed in the read loop goroutine, so they should not block.
 
 // OnError registers a callback for API error events.
-func (c *Client) OnError(fn func(ErrorEvent)) { c.onError = fn }
+func (c *Client) OnError(fn func(ErrorEvent)) { 
+	c.handlerMu.Lock()
+	defer c.handlerMu.Unlock()
+	c.onError = fn 
+}
 
 // OnSessionCreated registers a callback for session creation events.
-func (c *Client) OnSessionCreated(fn func(SessionCreated)) { c.onSessionCreated = fn }
+func (c *Client) OnSessionCreated(fn func(SessionCreated)) { 
+	c.handlerMu.Lock()
+	defer c.handlerMu.Unlock()
+	c.onSessionCreated = fn 
+}
 
 // OnSessionUpdated registers a callback for session update events.
-func (c *Client) OnSessionUpdated(fn func(SessionUpdated)) { c.onSessionUpdated = fn }
+func (c *Client) OnSessionUpdated(fn func(SessionUpdated)) { 
+	c.handlerMu.Lock()
+	defer c.handlerMu.Unlock()
+	c.onSessionUpdated = fn 
+}
 
 // OnRateLimitsUpdated registers a callback for rate limit update events.
-func (c *Client) OnRateLimitsUpdated(fn func(RateLimitsUpdated)) { c.onRateLimitsUpdated = fn }
+func (c *Client) OnRateLimitsUpdated(fn func(RateLimitsUpdated)) { 
+	c.handlerMu.Lock()
+	defer c.handlerMu.Unlock()
+	c.onRateLimitsUpdated = fn 
+}
 
 // OnResponseTextDelta registers a callback for streaming text response events.
-func (c *Client) OnResponseTextDelta(fn func(ResponseTextDelta)) { c.onResponseTextDelta = fn }
+func (c *Client) OnResponseTextDelta(fn func(ResponseTextDelta)) { 
+	c.handlerMu.Lock()
+	defer c.handlerMu.Unlock()
+	c.onResponseTextDelta = fn 
+}
 
 // OnResponseTextDone registers a callback for completed text response events.
-func (c *Client) OnResponseTextDone(fn func(ResponseTextDone)) { c.onResponseTextDone = fn }
+func (c *Client) OnResponseTextDone(fn func(ResponseTextDone)) { 
+	c.handlerMu.Lock()
+	defer c.handlerMu.Unlock()
+	c.onResponseTextDone = fn 
+}
 
 // OnResponseAudioDelta registers a callback for streaming audio response events.
-func (c *Client) OnResponseAudioDelta(fn func(ResponseAudioDelta)) { c.onResponseAudioDelta = fn }
+func (c *Client) OnResponseAudioDelta(fn func(ResponseAudioDelta)) { 
+	c.handlerMu.Lock()
+	defer c.handlerMu.Unlock()
+	c.onResponseAudioDelta = fn 
+}
 
 // OnResponseAudioDone registers a callback for completed audio response events.
-func (c *Client) OnResponseAudioDone(fn func(ResponseAudioDone)) { c.onResponseAudioDone = fn }
+func (c *Client) OnResponseAudioDone(fn func(ResponseAudioDone)) { 
+	c.handlerMu.Lock()
+	defer c.handlerMu.Unlock()
+	c.onResponseAudioDone = fn 
+}
 
 // readLoop continuously reads messages from the WebSocket connection.
 // It runs in a separate goroutine and handles message parsing and event dispatching.
@@ -215,21 +248,45 @@ func (c *Client) pingLoop() {
 func (c *Client) dispatch(env envelope, raw []byte) {
     switch env.Type {
     case "error":
-        var e ErrorEvent; _ = json.Unmarshal(raw, &e); if c.onError != nil { c.onError(e) }
+        var e ErrorEvent; _ = json.Unmarshal(raw, &e)
+        c.handlerMu.RLock()
+        if c.onError != nil { c.onError(e) }
+        c.handlerMu.RUnlock()
     case "session.created":
-        var e SessionCreated; _ = json.Unmarshal(raw, &e); if c.onSessionCreated != nil { c.onSessionCreated(e) }
+        var e SessionCreated; _ = json.Unmarshal(raw, &e)
+        c.handlerMu.RLock()
+        if c.onSessionCreated != nil { c.onSessionCreated(e) }
+        c.handlerMu.RUnlock()
     case "session.updated":
-        var e SessionUpdated; _ = json.Unmarshal(raw, &e); if c.onSessionUpdated != nil { c.onSessionUpdated(e) }
+        var e SessionUpdated; _ = json.Unmarshal(raw, &e)
+        c.handlerMu.RLock()
+        if c.onSessionUpdated != nil { c.onSessionUpdated(e) }
+        c.handlerMu.RUnlock()
     case "rate_limits.updated":
-        var e RateLimitsUpdated; _ = json.Unmarshal(raw, &e); if c.onRateLimitsUpdated != nil { c.onRateLimitsUpdated(e) }
+        var e RateLimitsUpdated; _ = json.Unmarshal(raw, &e)
+        c.handlerMu.RLock()
+        if c.onRateLimitsUpdated != nil { c.onRateLimitsUpdated(e) }
+        c.handlerMu.RUnlock()
     case "response.text.delta":
-        var e ResponseTextDelta; _ = json.Unmarshal(raw, &e); if c.onResponseTextDelta != nil { c.onResponseTextDelta(e) }
+        var e ResponseTextDelta; _ = json.Unmarshal(raw, &e)
+        c.handlerMu.RLock()
+        if c.onResponseTextDelta != nil { c.onResponseTextDelta(e) }
+        c.handlerMu.RUnlock()
     case "response.text.done":
-        var e ResponseTextDone; _ = json.Unmarshal(raw, &e); if c.onResponseTextDone != nil { c.onResponseTextDone(e) }
+        var e ResponseTextDone; _ = json.Unmarshal(raw, &e)
+        c.handlerMu.RLock()
+        if c.onResponseTextDone != nil { c.onResponseTextDone(e) }
+        c.handlerMu.RUnlock()
     case "response.audio.delta":
-        var e ResponseAudioDelta; _ = json.Unmarshal(raw, &e); if c.onResponseAudioDelta != nil { c.onResponseAudioDelta(e) }
+        var e ResponseAudioDelta; _ = json.Unmarshal(raw, &e)
+        c.handlerMu.RLock()
+        if c.onResponseAudioDelta != nil { c.onResponseAudioDelta(e) }
+        c.handlerMu.RUnlock()
     case "response.audio.done":
-        var e ResponseAudioDone; _ = json.Unmarshal(raw, &e); if c.onResponseAudioDone != nil { c.onResponseAudioDone(e) }
+        var e ResponseAudioDone; _ = json.Unmarshal(raw, &e)
+        c.handlerMu.RLock()
+        if c.onResponseAudioDone != nil { c.onResponseAudioDone(e) }
+        c.handlerMu.RUnlock()
     default:
         // extend as needed
     }

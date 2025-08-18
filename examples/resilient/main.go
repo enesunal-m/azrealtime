@@ -25,7 +25,7 @@ func main() {
 		StructuredLogger: azrealtime.NewLogger(azrealtime.LogLevelInfo),
 	}
 
-	fmt.Println("=== Azure OpenAI Realtime Resilience Demo ===\n")
+	fmt.Println("=== Azure OpenAI Realtime Resilience Demo ===")
 
 	// Example 1: Basic Retry Logic
 	fmt.Println("1. Basic Retry Logic:")
