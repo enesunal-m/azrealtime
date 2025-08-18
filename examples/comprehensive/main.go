@@ -57,7 +57,7 @@ func run(ctx context.Context) error {
 		APIVersion:       "2025-04-01-preview",
 		Credential:       azrealtime.APIKey(apiKey),
 		DialTimeout:      30 * time.Second,
-		Logger:           logger,
+		StructuredLogger: azrealtime.NewLogger(azrealtime.LogLevelDebug),
 	}
 
 	// Create client with proper error handling
@@ -222,10 +222,7 @@ func setupEventHandlers(client *azrealtime.Client) {
 	})
 }
 
-// logger provides structured logging for the azrealtime client
-func logger(event string, fields map[string]interface{}) {
-	log.Printf("[%s] %+v", event, fields)
-}
+// Note: Using structured logging with azrealtime.NewLogger() instead of custom logger function
 
 // ErrorAs is a helper function for error type assertions
 func ErrorAs(err error, target interface{}) bool {

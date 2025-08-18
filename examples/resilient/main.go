@@ -6,7 +6,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"os"
 	"time"
 
@@ -16,14 +15,14 @@ import (
 func main() {
 	ctx := context.Background()
 
-	// Configure client
+	// Configure client with structured logging
 	cfg := azrealtime.Config{
 		ResourceEndpoint: getEnvOrDefault("AZURE_OPENAI_ENDPOINT", "https://example.openai.azure.com"),
 		Deployment:       getEnvOrDefault("AZURE_OPENAI_REALTIME_DEPLOYMENT", "gpt-4o-realtime"),
 		APIVersion:       "2025-04-01-preview",
 		Credential:       azrealtime.APIKey(getEnvOrDefault("AZURE_OPENAI_API_KEY", "test-key")),
 		DialTimeout:      30 * time.Second,
-		Logger:           logger,
+		StructuredLogger: azrealtime.NewLogger(azrealtime.LogLevelInfo),
 	}
 
 	fmt.Println("=== Azure OpenAI Realtime Resilience Demo ===\n")
@@ -217,6 +216,4 @@ func getEnvOrDefault(key, defaultValue string) string {
 	return defaultValue
 }
 
-func logger(event string, fields map[string]interface{}) {
-	log.Printf("[%s] %+v", event, fields)
-}
+// Note: Using structured logging with StructuredLogger in config

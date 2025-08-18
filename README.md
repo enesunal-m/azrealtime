@@ -171,6 +171,46 @@ cfg.Credential = azrealtime.Bearer("your-bearer-token")
 
 ## Advanced Usage
 
+### Structured Logging
+
+The library provides advanced structured logging with configurable levels:
+
+```go
+// Option 1: Environment-based logging (set AZREALTIME_LOG_LEVEL=DEBUG)
+cfg := azrealtime.Config{
+    // ... other config
+    StructuredLogger: azrealtime.NewLoggerFromEnv(),
+}
+
+// Option 2: Explicit log level
+cfg := azrealtime.Config{
+    // ... other config
+    StructuredLogger: azrealtime.NewLogger(azrealtime.LogLevelDebug),
+}
+
+// Option 3: Contextual logging
+logger := azrealtime.NewLogger(azrealtime.LogLevelInfo)
+sessionLogger := logger.WithContext(map[string]interface{}{
+    "session_id": "abc123",
+    "user_id":    "user456", 
+})
+
+sessionLogger.Info("user_connected", map[string]interface{}{
+    "ip": "192.168.1.1",
+})
+// Output: [azrealtime] [INFO] user_connected session_id=abc123 user_id=user456 ip=192.168.1.1
+```
+
+**Log Levels:**
+- `LogLevelDebug`: All messages including detailed debugging
+- `LogLevelInfo`: Informational messages and above (default)
+- `LogLevelWarn`: Warnings and errors only
+- `LogLevelError`: Error messages only
+- `LogLevelOff`: No logging
+
+**Environment Variables:**
+- `AZREALTIME_LOG_LEVEL`: Sets the minimum log level (DEBUG, INFO, WARN, ERROR, OFF)
+
 ### Error Handling
 
 The library provides structured error types for better error handling:

@@ -190,7 +190,7 @@ func (c *Client) readLoop(ctx context.Context) {
         // Parse the event envelope to determine event type
         var env envelope
         if err := json.Unmarshal(data, &env); err != nil {
-            c.log("bad_event_json", map[string]any{"err": err, "raw_data": string(data)})
+            c.logError("bad_event_json", map[string]any{"err": err, "raw_data": string(data)})
             continue
         }
         
@@ -264,4 +264,34 @@ func (c *Client) nextEventID(ctx context.Context, payload map[string]any) (strin
     payload["event_id"] = id
     return id, c.send(ctx, payload)
 }
-func (c *Client) log(event string, fields map[string]any) { if c.cfg.Logger != nil { c.cfg.Logger(event, fields) } }
+func (c *Client) log(event string, fields map[string]any) {
+	if c.cfg.StructuredLogger != nil {
+		c.cfg.StructuredLogger.Info(event, fields)
+	} else if c.cfg.Logger != nil {
+		c.cfg.Logger(event, fields)
+	}
+}
+
+func (c *Client) logDebug(event string, fields map[string]any) {
+	if c.cfg.StructuredLogger != nil {
+		c.cfg.StructuredLogger.Debug(event, fields)
+	} else if c.cfg.Logger != nil {
+		c.cfg.Logger("DEBUG: "+event, fields)
+	}
+}
+
+func (c *Client) logWarn(event string, fields map[string]any) {
+	if c.cfg.StructuredLogger != nil {
+		c.cfg.StructuredLogger.Warn(event, fields)
+	} else if c.cfg.Logger != nil {
+		c.cfg.Logger("WARN: "+event, fields)
+	}
+}
+
+func (c *Client) logError(event string, fields map[string]any) {
+	if c.cfg.StructuredLogger != nil {
+		c.cfg.StructuredLogger.Error(event, fields)
+	} else if c.cfg.Logger != nil {
+		c.cfg.Logger("ERROR: "+event, fields)
+	}
+}

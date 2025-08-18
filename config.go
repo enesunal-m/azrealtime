@@ -62,4 +62,10 @@ type Config struct {
     // The fields parameter contains structured data relevant to each event.
     // Required: No (if nil, no logging occurs)
     Logger           func(event string, fields map[string]any)
+    
+    // StructuredLogger provides advanced structured logging with configurable levels.
+    // If both Logger and StructuredLogger are provided, StructuredLogger takes precedence.
+    // Use NewLogger() or NewLoggerFromEnv() to create a structured logger.
+    // Required: No (if nil, falls back to Logger or no logging)
+    StructuredLogger *Logger
 }
