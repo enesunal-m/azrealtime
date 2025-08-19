@@ -73,9 +73,9 @@ func (e *ConnectionError) Is(target error) bool {
 
 // SendError represents an error that occurred while sending data to the API.
 type SendError struct {
-	EventType string        // The type of event being sent
-	EventID   string        // The event ID (if available)
-	Cause     error         // The underlying error
+	EventType string // The type of event being sent
+	EventID   string // The event ID (if available)
+	Cause     error  // The underlying error
 }
 
 func (e *SendError) Error() string {

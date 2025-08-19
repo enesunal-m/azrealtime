@@ -29,7 +29,7 @@ func TestTextAssembler(t *testing.T) {
 
 	result := assembler.OnDone(done)
 	expected := "Hello World"
-	
+
 	if result != expected {
 		t.Errorf("expected %q, got %q", expected, result)
 	}
@@ -60,7 +60,7 @@ func TestTextAssembler_CompleteTextProvided(t *testing.T) {
 
 	result := assembler.OnDone(done)
 	expected := "Complete response text"
-	
+
 	if result != expected {
 		t.Errorf("expected %q, got %q", expected, result)
 	}
@@ -119,7 +119,7 @@ func TestTextAssembler_UnicodeHandling(t *testing.T) {
 
 	result := assembler.OnDone(ResponseTextDone{ResponseID: "resp_unicode", Text: ""})
 	expected := "Hello 🌍 世界!"
-	
+
 	if result != expected {
 		t.Errorf("expected %q, got %q", expected, result)
 	}
@@ -127,11 +127,11 @@ func TestTextAssembler_UnicodeHandling(t *testing.T) {
 
 func BenchmarkTextAssembler(b *testing.B) {
 	assembler := NewTextAssembler()
-	
+
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		responseID := "resp_" + string(rune(i))
-		
+
 		// Add multiple deltas
 		for j := 0; j < 10; j++ {
 			assembler.OnDelta(ResponseTextDelta{
@@ -139,7 +139,7 @@ func BenchmarkTextAssembler(b *testing.B) {
 				Delta:      "test delta content ",
 			})
 		}
-		
+
 		// Complete response
 		assembler.OnDone(ResponseTextDone{ResponseID: responseID, Text: ""})
 	}

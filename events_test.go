@@ -36,7 +36,7 @@ func TestEnvelope_Unmarshal(t *testing.T) {
 			if err != nil {
 				t.Fatalf("failed to unmarshal: %v", err)
 			}
-			
+
 			if env.Type != tt.expected.Type {
 				t.Errorf("expected type %q, got %q", tt.expected.Type, env.Type)
 			}

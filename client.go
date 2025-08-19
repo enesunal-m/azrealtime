@@ -1,16 +1,16 @@
 package azrealtime
 
 import (
-    "context"
-    "encoding/json"
-    "errors"
-    "fmt"
-    "net/http"
-    "net/url"
-    "sync"
-    "time"
+	"context"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"net/http"
+	"net/url"
+	"sync"
+	"time"
 
-    "nhooyr.io/websocket"
+	"nhooyr.io/websocket"
 )
 
 // Client represents a connection to the Azure OpenAI Realtime API.
@@ -21,24 +21,24 @@ import (
 // The client uses an event-driven architecture where you register callback
 // functions to handle different types of events received from the API.
 type Client struct {
-    cfg Config // Configuration used to create this client
+	cfg Config // Configuration used to create this client
 
-    // Connection state
-    conn       *websocket.Conn     // Underlying WebSocket connection
-    writeMu    sync.Mutex          // Protects writes to the WebSocket
-    readCancel context.CancelFunc  // Cancels the read loop when closing
-    closedCh   chan struct{}       // Signals when the client is closed
+	// Connection state
+	conn       *websocket.Conn    // Underlying WebSocket connection
+	writeMu    sync.Mutex         // Protects writes to the WebSocket
+	readCancel context.CancelFunc // Cancels the read loop when closing
+	closedCh   chan struct{}      // Signals when the client is closed
 
-    // Event handlers - these functions are called when corresponding events are received
-    handlerMu sync.RWMutex // Protects event handler fields
-    onError              func(ErrorEvent)        // Called for API errors
-    onSessionCreated     func(SessionCreated)    // Called when session is established
-    onSessionUpdated     func(SessionUpdated)    // Called when session config changes
-    onRateLimitsUpdated  func(RateLimitsUpdated) // Called for rate limit updates
-    onResponseTextDelta  func(ResponseTextDelta) // Called for streaming text responses
-    onResponseTextDone   func(ResponseTextDone)  // Called when text response completes
-    onResponseAudioDelta func(ResponseAudioDelta)// Called for streaming audio responses
-    onResponseAudioDone  func(ResponseAudioDone) // Called when audio response completes
+	// Event handlers - these functions are called when corresponding events are received
+	handlerMu            sync.RWMutex             // Protects event handler fields
+	onError              func(ErrorEvent)         // Called for API errors
+	onSessionCreated     func(SessionCreated)     // Called when session is established
+	onSessionUpdated     func(SessionUpdated)     // Called when session config changes
+	onRateLimitsUpdated  func(RateLimitsUpdated)  // Called for rate limit updates
+	onResponseTextDelta  func(ResponseTextDelta)  // Called for streaming text responses
+	onResponseTextDone   func(ResponseTextDone)   // Called when text response completes
+	onResponseAudioDelta func(ResponseAudioDelta) // Called for streaming audio responses
+	onResponseAudioDone  func(ResponseAudioDone)  // Called when audio response completes
 }
 
 // Dial establishes a WebSocket connection to the Azure OpenAI Realtime API.
@@ -50,94 +50,105 @@ type Client struct {
 //
 // Returns an error if configuration is invalid, connection fails, or authentication is rejected.
 func Dial(ctx context.Context, cfg Config) (*Client, error) {
-    // Validate configuration using new validation system
-    if err := ValidateConfig(cfg); err != nil {
-        return nil, err
-    }
-    
-    // Construct WebSocket URL from HTTP endpoint
-    u, err := url.Parse(cfg.ResourceEndpoint)
-    if err != nil { 
-        return nil, NewConfigError("ResourceEndpoint", cfg.ResourceEndpoint, "invalid URL format")
-    }
-    
-    // Set WebSocket scheme based on HTTP scheme
-    if u.Scheme == "https" {
-        u.Scheme = "wss"
-    } else {
-        u.Scheme = "ws" // For HTTP (mainly for testing)
-    }
-    u.Path = "/openai/realtime"
-    q := u.Query()
-    q.Set("api-version", cfg.APIVersion)
-    q.Set("deployment", cfg.Deployment)
-    u.RawQuery = q.Encode()
+	// Validate configuration using new validation system
+	if err := ValidateConfig(cfg); err != nil {
+		return nil, err
+	}
 
-    // Prepare authentication and custom headers
-    h := http.Header{}
-    if cfg.HandshakeHeaders != nil {
-        for k, vals := range cfg.HandshakeHeaders {
-            for _, v := range vals { h.Add(k, v) }
-        }
-    }
-    cfg.Credential.apply(h)
+	// Construct WebSocket URL from HTTP endpoint
+	u, err := url.Parse(cfg.ResourceEndpoint)
+	if err != nil {
+		return nil, NewConfigError("ResourceEndpoint", cfg.ResourceEndpoint, "invalid URL format")
+	}
 
-    // Apply dial timeout if specified
-    dialCtx := ctx
-    if cfg.DialTimeout > 0 {
-        var cancel context.CancelFunc
-        dialCtx, cancel = context.WithTimeout(ctx, cfg.DialTimeout)
-        defer cancel()
-    }
+	// Set WebSocket scheme based on HTTP scheme
+	if u.Scheme == "https" {
+		u.Scheme = "wss"
+	} else {
+		u.Scheme = "ws" // For HTTP (mainly for testing)
+	}
+	u.Path = "/openai/realtime"
+	q := u.Query()
+	q.Set("api-version", cfg.APIVersion)
+	q.Set("deployment", cfg.Deployment)
+	u.RawQuery = q.Encode()
 
-    // Establish WebSocket connection
-    ws, _, err := websocket.Dial(dialCtx, u.String(), &websocket.DialOptions{HTTPHeader: h})
-    if err != nil { 
-        return nil, NewConnectionError(u.String(), "dial", err)
-    }
+	// Prepare authentication and custom headers
+	h := http.Header{}
+	if cfg.HandshakeHeaders != nil {
+		for k, vals := range cfg.HandshakeHeaders {
+			for _, v := range vals {
+				h.Add(k, v)
+			}
+		}
+	}
+	cfg.Credential.apply(h)
 
-    // Create client and start background operations
-    c := &Client{ cfg: cfg, conn: ws, closedCh: make(chan struct{}) }
-    c.log("ws_connected", map[string]any{"url": u.String()})
+	// Apply dial timeout if specified
+	dialCtx := ctx
+	if cfg.DialTimeout > 0 {
+		var cancel context.CancelFunc
+		dialCtx, cancel = context.WithTimeout(ctx, cfg.DialTimeout)
+		defer cancel()
+	}
 
-    // Start read loop in separate goroutine
-    rcCtx, cancel := context.WithCancel(context.Background())
-    c.readCancel = cancel
-    go c.readLoop(rcCtx)
-    
-    // Start ping loop to maintain connection
-    go c.pingLoop()
-    return c, nil
+	// Establish WebSocket connection
+	ws, _, err := websocket.Dial(dialCtx, u.String(), &websocket.DialOptions{HTTPHeader: h})
+	if err != nil {
+		return nil, NewConnectionError(u.String(), "dial", err)
+	}
+
+	// Create client and start background operations
+	c := &Client{cfg: cfg, conn: ws, closedCh: make(chan struct{})}
+	c.log("ws_connected", map[string]any{"url": u.String()})
+
+	// Start read loop in separate goroutine
+	rcCtx, cancel := context.WithCancel(context.Background())
+	c.readCancel = cancel
+	go c.readLoop(rcCtx)
+
+	// Start ping loop to maintain connection
+	go c.pingLoop()
+	return c, nil
 }
 
 // DialResilient creates a new client with built-in retry and resilience features.
 // This is a convenience function that combines Dial with retry logic and circuit breaker.
 func DialResilient(ctx context.Context, cfg Config) (*WithRetryableClient, error) {
-    retryConfig := DefaultRetryConfig()
-    
-    client, err := DialWithRetry(ctx, cfg, retryConfig)
-    if err != nil {
-        return nil, err
-    }
-    
-    return NewRetryableClient(client, retryConfig), nil
+	retryConfig := DefaultRetryConfig()
+
+	client, err := DialWithRetry(ctx, cfg, retryConfig)
+	if err != nil {
+		return nil, err
+	}
+
+	return NewRetryableClient(client, retryConfig), nil
 }
 
 // Close gracefully shuts down the client and cleans up all resources.
 // This method is safe to call multiple times and will not block.
 // After calling Close(), the client should not be used for further operations.
 func (c *Client) Close() error {
-    // Cancel the read loop to stop processing incoming messages
-    if c.readCancel != nil { c.readCancel() }
-    
-    // Close the WebSocket connection safely
-    c.writeMu.Lock()
-    if c.conn != nil { _ = c.conn.Close(websocket.StatusNormalClosure, "closing"); c.conn = nil }
-    c.writeMu.Unlock()
-    
-    // Signal that the client is closed
-    select { case <-c.closedCh: default: close(c.closedCh) }
-    return nil
+	// Cancel the read loop to stop processing incoming messages
+	if c.readCancel != nil {
+		c.readCancel()
+	}
+
+	// Close the WebSocket connection safely
+	c.writeMu.Lock()
+	if c.conn != nil {
+		_ = c.conn.Close(websocket.StatusNormalClosure, "closing")
+		c.conn = nil
+	}
+	c.writeMu.Unlock()
+
+	// Signal that the client is closed
+	select {
+	case <-c.closedCh:
+	default:
+		close(c.closedCh)
+	}
+	return nil
 }
 
 // Event handler registration methods
@@ -145,181 +156,223 @@ func (c *Client) Close() error {
 // Callbacks are executed in the read loop goroutine, so they should not block.
 
 // OnError registers a callback for API error events.
-func (c *Client) OnError(fn func(ErrorEvent)) { 
+func (c *Client) OnError(fn func(ErrorEvent)) {
 	c.handlerMu.Lock()
 	defer c.handlerMu.Unlock()
-	c.onError = fn 
+	c.onError = fn
 }
 
 // OnSessionCreated registers a callback for session creation events.
-func (c *Client) OnSessionCreated(fn func(SessionCreated)) { 
+func (c *Client) OnSessionCreated(fn func(SessionCreated)) {
 	c.handlerMu.Lock()
 	defer c.handlerMu.Unlock()
-	c.onSessionCreated = fn 
+	c.onSessionCreated = fn
 }
 
 // OnSessionUpdated registers a callback for session update events.
-func (c *Client) OnSessionUpdated(fn func(SessionUpdated)) { 
+func (c *Client) OnSessionUpdated(fn func(SessionUpdated)) {
 	c.handlerMu.Lock()
 	defer c.handlerMu.Unlock()
-	c.onSessionUpdated = fn 
+	c.onSessionUpdated = fn
 }
 
 // OnRateLimitsUpdated registers a callback for rate limit update events.
-func (c *Client) OnRateLimitsUpdated(fn func(RateLimitsUpdated)) { 
+func (c *Client) OnRateLimitsUpdated(fn func(RateLimitsUpdated)) {
 	c.handlerMu.Lock()
 	defer c.handlerMu.Unlock()
-	c.onRateLimitsUpdated = fn 
+	c.onRateLimitsUpdated = fn
 }
 
 // OnResponseTextDelta registers a callback for streaming text response events.
-func (c *Client) OnResponseTextDelta(fn func(ResponseTextDelta)) { 
+func (c *Client) OnResponseTextDelta(fn func(ResponseTextDelta)) {
 	c.handlerMu.Lock()
 	defer c.handlerMu.Unlock()
-	c.onResponseTextDelta = fn 
+	c.onResponseTextDelta = fn
 }
 
 // OnResponseTextDone registers a callback for completed text response events.
-func (c *Client) OnResponseTextDone(fn func(ResponseTextDone)) { 
+func (c *Client) OnResponseTextDone(fn func(ResponseTextDone)) {
 	c.handlerMu.Lock()
 	defer c.handlerMu.Unlock()
-	c.onResponseTextDone = fn 
+	c.onResponseTextDone = fn
 }
 
 // OnResponseAudioDelta registers a callback for streaming audio response events.
-func (c *Client) OnResponseAudioDelta(fn func(ResponseAudioDelta)) { 
+func (c *Client) OnResponseAudioDelta(fn func(ResponseAudioDelta)) {
 	c.handlerMu.Lock()
 	defer c.handlerMu.Unlock()
-	c.onResponseAudioDelta = fn 
+	c.onResponseAudioDelta = fn
 }
 
 // OnResponseAudioDone registers a callback for completed audio response events.
-func (c *Client) OnResponseAudioDone(fn func(ResponseAudioDone)) { 
+func (c *Client) OnResponseAudioDone(fn func(ResponseAudioDone)) {
 	c.handlerMu.Lock()
 	defer c.handlerMu.Unlock()
-	c.onResponseAudioDone = fn 
+	c.onResponseAudioDone = fn
 }
 
 // readLoop continuously reads messages from the WebSocket connection.
 // It runs in a separate goroutine and handles message parsing and event dispatching.
 // The loop terminates when the context is canceled or the connection fails.
 func (c *Client) readLoop(ctx context.Context) {
-    defer func() {
-        // Clean up connection state when read loop exits
-        c.writeMu.Lock()
-        if c.conn != nil { _ = c.conn.Close(websocket.StatusNormalClosure, "reader_exit"); c.conn = nil }
-        c.writeMu.Unlock()
-        select { case <-c.closedCh: default: close(c.closedCh) }
-    }()
+	defer func() {
+		// Clean up connection state when read loop exits
+		c.writeMu.Lock()
+		if c.conn != nil {
+			_ = c.conn.Close(websocket.StatusNormalClosure, "reader_exit")
+			c.conn = nil
+		}
+		c.writeMu.Unlock()
+		select {
+		case <-c.closedCh:
+		default:
+			close(c.closedCh)
+		}
+	}()
 
-    for {
-        // Read next message from WebSocket
-        typ, data, err := c.conn.Read(ctx)
-        if err != nil { return } // Connection closed or error occurred
-        
-        // Only process text messages (JSON events)
-        if typ != websocket.MessageText { continue }
-        
-        // Parse the event envelope to determine event type
-        var env envelope
-        if err := json.Unmarshal(data, &env); err != nil {
-            c.logError("bad_event_json", map[string]any{"err": err, "raw_data": string(data)})
-            continue
-        }
-        
-        // Dispatch to appropriate event handler
-        c.dispatch(env, data)
-    }
+	for {
+		// Read next message from WebSocket
+		typ, data, err := c.conn.Read(ctx)
+		if err != nil {
+			return
+		} // Connection closed or error occurred
+
+		// Only process text messages (JSON events)
+		if typ != websocket.MessageText {
+			continue
+		}
+
+		// Parse the event envelope to determine event type
+		var env envelope
+		if err := json.Unmarshal(data, &env); err != nil {
+			c.logError("bad_event_json", map[string]any{"err": err, "raw_data": string(data)})
+			continue
+		}
+
+		// Dispatch to appropriate event handler
+		c.dispatch(env, data)
+	}
 }
 
 func (c *Client) pingLoop() {
-    t := time.NewTicker(20 * time.Second); defer t.Stop()
-    for {
-        select {
-        case <-c.closedCh: return
-        case <-t.C:
-            c.writeMu.Lock()
-            if c.conn != nil { _ = c.conn.Ping(context.Background()) }
-            c.writeMu.Unlock()
-        }
-    }
+	t := time.NewTicker(20 * time.Second)
+	defer t.Stop()
+	for {
+		select {
+		case <-c.closedCh:
+			return
+		case <-t.C:
+			c.writeMu.Lock()
+			if c.conn != nil {
+				_ = c.conn.Ping(context.Background())
+			}
+			c.writeMu.Unlock()
+		}
+	}
 }
 
 func (c *Client) dispatch(env envelope, raw []byte) {
-    switch env.Type {
-    case "error":
-        var e ErrorEvent; _ = json.Unmarshal(raw, &e)
-        c.handlerMu.RLock()
-        if c.onError != nil { c.onError(e) }
-        c.handlerMu.RUnlock()
-    case "session.created":
-        var e SessionCreated; _ = json.Unmarshal(raw, &e)
-        c.handlerMu.RLock()
-        if c.onSessionCreated != nil { c.onSessionCreated(e) }
-        c.handlerMu.RUnlock()
-    case "session.updated":
-        var e SessionUpdated; _ = json.Unmarshal(raw, &e)
-        c.handlerMu.RLock()
-        if c.onSessionUpdated != nil { c.onSessionUpdated(e) }
-        c.handlerMu.RUnlock()
-    case "rate_limits.updated":
-        var e RateLimitsUpdated; _ = json.Unmarshal(raw, &e)
-        c.handlerMu.RLock()
-        if c.onRateLimitsUpdated != nil { c.onRateLimitsUpdated(e) }
-        c.handlerMu.RUnlock()
-    case "response.text.delta":
-        var e ResponseTextDelta; _ = json.Unmarshal(raw, &e)
-        c.handlerMu.RLock()
-        if c.onResponseTextDelta != nil { c.onResponseTextDelta(e) }
-        c.handlerMu.RUnlock()
-    case "response.text.done":
-        var e ResponseTextDone; _ = json.Unmarshal(raw, &e)
-        c.handlerMu.RLock()
-        if c.onResponseTextDone != nil { c.onResponseTextDone(e) }
-        c.handlerMu.RUnlock()
-    case "response.audio.delta":
-        var e ResponseAudioDelta; _ = json.Unmarshal(raw, &e)
-        c.handlerMu.RLock()
-        if c.onResponseAudioDelta != nil { c.onResponseAudioDelta(e) }
-        c.handlerMu.RUnlock()
-    case "response.audio.done":
-        var e ResponseAudioDone; _ = json.Unmarshal(raw, &e)
-        c.handlerMu.RLock()
-        if c.onResponseAudioDone != nil { c.onResponseAudioDone(e) }
-        c.handlerMu.RUnlock()
-    default:
-        // extend as needed
-    }
+	switch env.Type {
+	case "error":
+		var e ErrorEvent
+		_ = json.Unmarshal(raw, &e)
+		c.handlerMu.RLock()
+		if c.onError != nil {
+			c.onError(e)
+		}
+		c.handlerMu.RUnlock()
+	case "session.created":
+		var e SessionCreated
+		_ = json.Unmarshal(raw, &e)
+		c.handlerMu.RLock()
+		if c.onSessionCreated != nil {
+			c.onSessionCreated(e)
+		}
+		c.handlerMu.RUnlock()
+	case "session.updated":
+		var e SessionUpdated
+		_ = json.Unmarshal(raw, &e)
+		c.handlerMu.RLock()
+		if c.onSessionUpdated != nil {
+			c.onSessionUpdated(e)
+		}
+		c.handlerMu.RUnlock()
+	case "rate_limits.updated":
+		var e RateLimitsUpdated
+		_ = json.Unmarshal(raw, &e)
+		c.handlerMu.RLock()
+		if c.onRateLimitsUpdated != nil {
+			c.onRateLimitsUpdated(e)
+		}
+		c.handlerMu.RUnlock()
+	case "response.text.delta":
+		var e ResponseTextDelta
+		_ = json.Unmarshal(raw, &e)
+		c.handlerMu.RLock()
+		if c.onResponseTextDelta != nil {
+			c.onResponseTextDelta(e)
+		}
+		c.handlerMu.RUnlock()
+	case "response.text.done":
+		var e ResponseTextDone
+		_ = json.Unmarshal(raw, &e)
+		c.handlerMu.RLock()
+		if c.onResponseTextDone != nil {
+			c.onResponseTextDone(e)
+		}
+		c.handlerMu.RUnlock()
+	case "response.audio.delta":
+		var e ResponseAudioDelta
+		_ = json.Unmarshal(raw, &e)
+		c.handlerMu.RLock()
+		if c.onResponseAudioDelta != nil {
+			c.onResponseAudioDelta(e)
+		}
+		c.handlerMu.RUnlock()
+	case "response.audio.done":
+		var e ResponseAudioDone
+		_ = json.Unmarshal(raw, &e)
+		c.handlerMu.RLock()
+		if c.onResponseAudioDone != nil {
+			c.onResponseAudioDone(e)
+		}
+		c.handlerMu.RUnlock()
+	default:
+		// extend as needed
+	}
 }
 
 func (c *Client) send(ctx context.Context, payload any) error {
-    c.writeMu.Lock(); defer c.writeMu.Unlock()
-    if c.conn == nil { return ErrClosed }
-    
-    b, err := json.Marshal(payload)
-    if err != nil { 
-        return NewSendError("unknown", "", fmt.Errorf("marshal payload: %w", err))
-    }
-    
-    // Apply send timeout
-    ctx, cancel := context.WithTimeout(ctx, 15*time.Second)
-    defer cancel()
-    
-    err = c.conn.Write(ctx, websocket.MessageText, b)
-    if err != nil {
-        if errors.Is(err, context.DeadlineExceeded) {
-            return NewSendError("unknown", "", ErrSendTimeout)
-        }
-        return NewSendError("unknown", "", err)
-    }
-    
-    return nil
+	c.writeMu.Lock()
+	defer c.writeMu.Unlock()
+	if c.conn == nil {
+		return ErrClosed
+	}
+
+	b, err := json.Marshal(payload)
+	if err != nil {
+		return NewSendError("unknown", "", fmt.Errorf("marshal payload: %w", err))
+	}
+
+	// Apply send timeout
+	ctx, cancel := context.WithTimeout(ctx, 15*time.Second)
+	defer cancel()
+
+	err = c.conn.Write(ctx, websocket.MessageText, b)
+	if err != nil {
+		if errors.Is(err, context.DeadlineExceeded) {
+			return NewSendError("unknown", "", ErrSendTimeout)
+		}
+		return NewSendError("unknown", "", err)
+	}
+
+	return nil
 }
 
 func (c *Client) nextEventID(ctx context.Context, payload map[string]any) (string, error) {
-    id := fmt.Sprintf("evt_%d", time.Now().UnixNano())
-    payload["event_id"] = id
-    return id, c.send(ctx, payload)
+	id := fmt.Sprintf("evt_%d", time.Now().UnixNano())
+	payload["event_id"] = id
+	return id, c.send(ctx, payload)
 }
 func (c *Client) log(event string, fields map[string]any) {
 	if c.cfg.StructuredLogger != nil {
@@ -329,21 +382,6 @@ func (c *Client) log(event string, fields map[string]any) {
 	}
 }
 
-func (c *Client) logDebug(event string, fields map[string]any) {
-	if c.cfg.StructuredLogger != nil {
-		c.cfg.StructuredLogger.Debug(event, fields)
-	} else if c.cfg.Logger != nil {
-		c.cfg.Logger("DEBUG: "+event, fields)
-	}
-}
-
-func (c *Client) logWarn(event string, fields map[string]any) {
-	if c.cfg.StructuredLogger != nil {
-		c.cfg.StructuredLogger.Warn(event, fields)
-	} else if c.cfg.Logger != nil {
-		c.cfg.Logger("WARN: "+event, fields)
-	}
-}
 
 func (c *Client) logError(event string, fields map[string]any) {
 	if c.cfg.StructuredLogger != nil {

@@ -10,7 +10,7 @@ import (
 
 func TestDial_InvalidConfig(t *testing.T) {
 	ctx := context.Background()
-	
+
 	tests := []struct {
 		name   string
 		config Config
@@ -52,7 +52,7 @@ func TestDial_InvalidConfig(t *testing.T) {
 
 func TestDial_InvalidEndpoint(t *testing.T) {
 	ctx := context.Background()
-	
+
 	config := Config{
 		ResourceEndpoint: "invalid-url",
 		Deployment:       "test-deployment",
@@ -75,7 +75,7 @@ func TestClient_WithMockServer(t *testing.T) {
 
 	// Create config pointing to mock server
 	config := CreateMockConfig(mockServer.URL())
-	
+
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
@@ -94,7 +94,7 @@ func TestClient_WithMockServer(t *testing.T) {
 		mu.Lock()
 		defer mu.Unlock()
 		sessionCreatedReceived = true
-		
+
 		if event.Type != "session.created" {
 			t.Errorf("expected session.created, got %s", event.Type)
 		}
@@ -266,7 +266,7 @@ func TestClient_EventHandlers(t *testing.T) {
 		mu.Lock()
 		defer mu.Unlock()
 		errorReceived = true
-		
+
 		if event.Error.Message != "Test error message" {
 			t.Errorf("expected 'Test error message', got %q", event.Error.Message)
 		}
@@ -335,7 +335,7 @@ func TestClient_URLConstruction(t *testing.T) {
 			if err != nil {
 				t.Fatalf("failed to parse endpoint: %v", err)
 			}
-			
+
 			u.Scheme = "wss"
 			u.Path = "/openai/realtime"
 			q := u.Query()
@@ -355,11 +355,11 @@ func TestClient_URLConstruction(t *testing.T) {
 
 func TestClient_Dispatch_UnknownEventType(t *testing.T) {
 	client := &Client{}
-	
+
 	// Test with unknown event type - should not panic
 	env := envelope{Type: "unknown.event.type"}
 	rawJSON := []byte(`{"type":"unknown.event.type","data":"test"}`)
-	
+
 	// This should not panic
 	client.dispatch(env, rawJSON)
 }
@@ -379,12 +379,12 @@ func TestClient_NextEventID(t *testing.T) {
 
 	// Test nextEventID generates unique IDs
 	payload := map[string]any{"type": "test"}
-	
+
 	id1, err := client.nextEventID(ctx, payload)
 	if err != nil {
 		t.Fatalf("failed to generate event ID: %v", err)
 	}
-	
+
 	id2, err := client.nextEventID(ctx, payload)
 	if err != nil {
 		t.Fatalf("failed to generate second event ID: %v", err)
@@ -393,7 +393,7 @@ func TestClient_NextEventID(t *testing.T) {
 	if id1 == id2 {
 		t.Error("expected unique event IDs")
 	}
-	
+
 	if id1 == "" || id2 == "" {
 		t.Error("expected non-empty event IDs")
 	}

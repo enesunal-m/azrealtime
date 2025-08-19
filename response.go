@@ -11,27 +11,27 @@ import (
 type CreateResponseOptions struct {
 	// Modalities specifies which output types to generate.
 	// Supported values: ["text", "audio"]
-	Modalities   []string       `json:"modalities,omitempty"`
-	
+	Modalities []string `json:"modalities,omitempty"`
+
 	// Prompt provides a direct instruction for this specific response.
 	// This is added to the conversation context temporarily.
-	Prompt       string         `json:"prompt,omitempty"`
-	
+	Prompt string `json:"prompt,omitempty"`
+
 	// Conversation specifies a conversation ID if managing multiple conversations.
-	Conversation string         `json:"conversation,omitempty"`
-	
+	Conversation string `json:"conversation,omitempty"`
+
 	// Metadata allows attaching custom data to the response for tracking purposes.
-	Metadata     map[string]any `json:"metadata,omitempty"`
-	
+	Metadata map[string]any `json:"metadata,omitempty"`
+
 	// Instructions provide response-specific guidance, overriding session instructions.
-	Instructions string         `json:"instructions,omitempty"`
-	
+	Instructions string `json:"instructions,omitempty"`
+
 	// Temperature controls randomness in the response (0.0 = deterministic, 1.0 = very random).
 	// Typical range: 0.0-1.0
-	Temperature  float64        `json:"temperature,omitempty"`
-	
+	Temperature float64 `json:"temperature,omitempty"`
+
 	// Input provides explicit input items for the response (advanced usage).
-	Input        []any          `json:"input,omitempty"`
+	Input []any `json:"input,omitempty"`
 }
 
 // CreateResponse requests the assistant to generate a response with the given options.
@@ -41,12 +41,12 @@ func (c *Client) CreateResponse(ctx context.Context, opts CreateResponseOptions)
 	if ctx == nil {
 		return "", NewSendError("response.create", "", errors.New("context cannot be nil"))
 	}
-	
+
 	// Validate response options
 	if err := ValidateCreateResponseOptions(opts); err != nil {
 		return "", NewSendError("response.create", "", err)
 	}
-	
+
 	payload := map[string]any{"type": "response.create", "response": opts}
 	return c.nextEventID(ctx, payload)
 }
@@ -62,22 +62,22 @@ func ValidateCreateResponseOptions(opts CreateResponseOptions) error {
 			}
 		}
 	}
-	
+
 	// Validate temperature
 	if opts.Temperature < 0.0 || opts.Temperature > 2.0 {
 		return fmt.Errorf("temperature must be between 0.0 and 2.0, got %f", opts.Temperature)
 	}
-	
+
 	// Validate prompt length
 	if len(opts.Prompt) > 10000 {
 		return fmt.Errorf("prompt too long (%d characters), maximum is 10000", len(opts.Prompt))
 	}
-	
+
 	// Validate instructions length
 	if len(opts.Instructions) > 10000 {
 		return fmt.Errorf("instructions too long (%d characters), maximum is 10000", len(opts.Instructions))
 	}
-	
+
 	// Validate conversation ID format (if specified)
 	if opts.Conversation != "" {
 		if len(opts.Conversation) > 100 {
@@ -85,6 +85,6 @@ func ValidateCreateResponseOptions(opts CreateResponseOptions) error {
 		}
 		// Could add more specific format validation here
 	}
-	
+
 	return nil
 }

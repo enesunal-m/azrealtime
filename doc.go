@@ -29,7 +29,7 @@
 //
 // The client provides callback methods for handling various events:
 //   - OnResponseTextDelta: Handle streaming text responses
-//   - OnResponseAudioDelta: Handle streaming audio responses  
+//   - OnResponseAudioDelta: Handle streaming audio responses
 //   - OnError: Handle API errors
 //   - OnSessionCreated/Updated: Handle session lifecycle events
 //

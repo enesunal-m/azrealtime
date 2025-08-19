@@ -5,8 +5,9 @@ package azrealtime
 // such as Session configuration fields.
 //
 // Example usage:
-//   session := Session{
-//       Voice: Ptr("alloy"),
-//       Instructions: Ptr("You are a helpful assistant."),
-//   }
+//
+//	session := Session{
+//	    Voice: Ptr("alloy"),
+//	    Instructions: Ptr("You are a helpful assistant."),
+//	}
 func Ptr[T any](v T) *T { return &v }

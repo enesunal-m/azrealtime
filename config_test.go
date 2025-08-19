@@ -28,7 +28,7 @@ func TestAPIKey_apply(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			h := http.Header{}
 			tt.key.apply(h)
-			
+
 			if tt.expected == "" {
 				if h.Get("api-key") != "" {
 					t.Errorf("expected empty api-key header, got %q", h.Get("api-key"))
@@ -64,7 +64,7 @@ func TestBearer_apply(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			h := http.Header{}
 			tt.token.apply(h)
-			
+
 			if tt.expected == "" {
 				if h.Get("Authorization") != "" {
 					t.Errorf("expected empty Authorization header, got %q", h.Get("Authorization"))
@@ -138,11 +138,11 @@ func TestConfig_validation(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Test the validation logic that's in Dial function
-			hasError := tt.config.ResourceEndpoint == "" || 
-					   tt.config.Deployment == "" || 
-					   tt.config.APIVersion == "" || 
-					   tt.config.Credential == nil
-			
+			hasError := tt.config.ResourceEndpoint == "" ||
+				tt.config.Deployment == "" ||
+				tt.config.APIVersion == "" ||
+				tt.config.Credential == nil
+
 			if hasError != tt.shouldError {
 				t.Errorf("expected error: %v, got error: %v", tt.shouldError, hasError)
 			}

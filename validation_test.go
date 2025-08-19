@@ -65,7 +65,7 @@ func TestAppendPCM16_Validation(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			err := client.AppendPCM16(tt.ctx, tt.data)
-			
+
 			if tt.expectError {
 				if err == nil {
 					t.Error("expected error but got nil")
@@ -197,7 +197,7 @@ func TestValidateSession(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			err := ValidateSession(tt.session)
-			
+
 			if tt.expectError {
 				if err == nil {
 					t.Error("expected error but got nil")
@@ -286,7 +286,7 @@ func TestValidateCreateResponseOptions(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			err := ValidateCreateResponseOptions(tt.opts)
-			
+
 			if tt.expectError {
 				if err == nil {
 					t.Error("expected error but got nil")
@@ -348,19 +348,19 @@ func TestValidateConfig_Enhanced(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			err := ValidateConfig(tt.config)
-			
+
 			if tt.expectError {
 				if err == nil {
 					t.Error("expected validation error but got nil")
 					return
 				}
-				
+
 				var configErr *ConfigError
 				if !ErrorAs(err, &configErr) {
 					t.Errorf("expected ConfigError, got %T", err)
 					return
 				}
-				
+
 				if configErr.Field != tt.errorField {
 					t.Errorf("expected error field %q, got %q", tt.errorField, configErr.Field)
 				}
@@ -399,7 +399,7 @@ func BenchmarkValidateSession(b *testing.B) {
 			SilenceDurationMS: 200,
 		},
 	}
-	
+
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		_ = ValidateSession(session)
@@ -414,7 +414,7 @@ func BenchmarkValidateCreateResponseOptions(b *testing.B) {
 		Temperature:  0.7,
 		Conversation: "conv_123",
 	}
-	
+
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		_ = ValidateCreateResponseOptions(opts)

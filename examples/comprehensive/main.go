@@ -39,12 +39,12 @@ func run(ctx context.Context) error {
 	if endpoint == "" {
 		return fmt.Errorf("AZURE_OPENAI_ENDPOINT environment variable is required")
 	}
-	
+
 	deployment := os.Getenv("AZURE_OPENAI_REALTIME_DEPLOYMENT")
 	if deployment == "" {
 		return fmt.Errorf("AZURE_OPENAI_REALTIME_DEPLOYMENT environment variable is required")
 	}
-	
+
 	apiKey := os.Getenv("AZURE_OPENAI_API_KEY")
 	if apiKey == "" {
 		return fmt.Errorf("AZURE_OPENAI_API_KEY environment variable is required")
@@ -66,7 +66,7 @@ func run(ctx context.Context) error {
 		// Handle different error types
 		var configErr *azrealtime.ConfigError
 		var connErr *azrealtime.ConnectionError
-		
+
 		switch {
 		case ErrorAs(err, &configErr):
 			return fmt.Errorf("configuration error in field %q: %s", configErr.Field, configErr.Message)
@@ -124,26 +124,26 @@ func run(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("failed to create response: %v", err)
 	}
-	
+
 	log.Printf("Created response request with event ID: %s", eventID)
 
 	// Simulate sending audio data (replace with real audio input)
 	go func() {
 		time.Sleep(2 * time.Second) // Wait for initial response
-		
+
 		// Generate sample audio data (silence)
 		audioData := make([]byte, azrealtime.PCM16BytesFor(200, azrealtime.DefaultSampleRate))
-		
+
 		if err := client.AppendPCM16(ctx, audioData); err != nil {
 			log.Printf("Failed to append audio: %v", err)
 			return
 		}
-		
+
 		if err := client.InputCommit(ctx); err != nil {
 			log.Printf("Failed to commit audio: %v", err)
 			return
 		}
-		
+
 		log.Println("Sent sample audio data")
 	}()
 
@@ -168,7 +168,7 @@ func setupEventHandlers(client *azrealtime.Client) {
 
 	// Session lifecycle handlers
 	client.OnSessionCreated(func(event azrealtime.SessionCreated) {
-		log.Printf("Session created: ID=%s, Model=%s, Voice=%s", 
+		log.Printf("Session created: ID=%s, Model=%s, Voice=%s",
 			event.Session.ID, event.Session.Model, event.Session.Voice)
 		if len(event.Session.Modalities) > 0 {
 			log.Printf("Supported modalities: %v", event.Session.Modalities)
@@ -182,7 +182,7 @@ func setupEventHandlers(client *azrealtime.Client) {
 	// Rate limiting information
 	client.OnRateLimitsUpdated(func(event azrealtime.RateLimitsUpdated) {
 		for _, limit := range event.RateLimits {
-			log.Printf("Rate limit %s: %d/%d (resets in %ds)", 
+			log.Printf("Rate limit %s: %d/%d (resets in %ds)",
 				limit.Name, limit.Remaining, limit.Limit, limit.ResetSeconds)
 		}
 	})
@@ -208,7 +208,7 @@ func setupEventHandlers(client *azrealtime.Client) {
 	client.OnResponseAudioDone(func(event azrealtime.ResponseAudioDone) {
 		pcmData := audioAssembler.OnDone(event.ResponseID)
 		log.Printf("Audio response complete: %d bytes of PCM data", len(pcmData))
-		
+
 		// Convert to WAV and save (optional)
 		if len(pcmData) > 0 {
 			wavData := azrealtime.WAVFromPCM16Mono(pcmData, azrealtime.DefaultSampleRate)

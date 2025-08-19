@@ -178,17 +178,17 @@ func (l *Logger) WithContext(context map[string]interface{}) *contextualLogger {
 // mergeFields combines the contextual fields with message-specific fields
 func (cl *contextualLogger) mergeFields(fields map[string]interface{}) map[string]interface{} {
 	merged := make(map[string]interface{})
-	
+
 	// Add context fields first
 	for k, v := range cl.context {
 		merged[k] = v
 	}
-	
+
 	// Add message fields (overrides context if same key)
 	for k, v := range fields {
 		merged[k] = v
 	}
-	
+
 	return merged
 }
 

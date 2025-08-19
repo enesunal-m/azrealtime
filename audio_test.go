@@ -34,7 +34,7 @@ func TestAudioAssembler(t *testing.T) {
 	// Get complete audio
 	complete := assembler.OnDone("resp_123")
 	expected := "Hello World"
-	
+
 	if string(complete) != expected {
 		t.Errorf("expected %q, got %q", expected, string(complete))
 	}
@@ -48,7 +48,7 @@ func TestAudioAssembler(t *testing.T) {
 
 func TestAudioAssembler_InvalidBase64(t *testing.T) {
 	assembler := NewAudioAssembler()
-	
+
 	delta := ResponseAudioDelta{
 		ResponseID:  "resp_123",
 		DeltaBase64: "invalid-base64!",
@@ -137,7 +137,7 @@ func TestWAVFromPCM16Mono(t *testing.T) {
 
 func TestWAVFromPCM16Mono_EmptyData(t *testing.T) {
 	wav := WAVFromPCM16Mono([]byte{}, 24000)
-	
+
 	// Should still create valid WAV header
 	if len(wav) != 44 {
 		t.Errorf("expected WAV length 44 for empty PCM, got %d", len(wav))
@@ -147,7 +147,7 @@ func TestWAVFromPCM16Mono_EmptyData(t *testing.T) {
 func BenchmarkAudioAssembler(b *testing.B) {
 	assembler := NewAudioAssembler()
 	testData := base64.StdEncoding.EncodeToString(make([]byte, 1024))
-	
+
 	delta := ResponseAudioDelta{
 		ResponseID:  "resp_123",
 		DeltaBase64: testData,
@@ -163,7 +163,7 @@ func BenchmarkAudioAssembler(b *testing.B) {
 
 func BenchmarkWAVFromPCM16Mono(b *testing.B) {
 	pcmData := make([]byte, 9600) // 200ms at 24kHz
-	
+
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		_ = WAVFromPCM16Mono(pcmData, 24000)

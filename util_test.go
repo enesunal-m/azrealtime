@@ -9,7 +9,7 @@ func TestPtr(t *testing.T) {
 	str := "test string"
 	strPtr := Ptr(str)
 	if strPtr == nil {
-		t.Error("expected non-nil pointer for string")
+		t.Fatal("expected non-nil pointer for string")
 	}
 	if *strPtr != str {
 		t.Errorf("expected %q, got %q", str, *strPtr)
@@ -19,7 +19,7 @@ func TestPtr(t *testing.T) {
 	num := 42
 	numPtr := Ptr(num)
 	if numPtr == nil {
-		t.Error("expected non-nil pointer for int")
+		t.Fatal("expected non-nil pointer for int")
 	}
 	if *numPtr != num {
 		t.Errorf("expected %d, got %d", num, *numPtr)
@@ -29,7 +29,7 @@ func TestPtr(t *testing.T) {
 	b := true
 	bPtr := Ptr(b)
 	if bPtr == nil {
-		t.Error("expected non-nil pointer for bool")
+		t.Fatal("expected non-nil pointer for bool")
 	}
 	if *bPtr != b {
 		t.Errorf("expected %v, got %v", b, *bPtr)
@@ -42,7 +42,7 @@ func TestPtr(t *testing.T) {
 	s := testStruct{Field: "value"}
 	sPtr := Ptr(s)
 	if sPtr == nil {
-		t.Error("expected non-nil pointer for struct")
+		t.Fatal("expected non-nil pointer for struct")
 	}
 	if sPtr.Field != s.Field {
 		t.Errorf("expected %q, got %q", s.Field, sPtr.Field)
@@ -92,7 +92,7 @@ func TestPtr_SessionUsage(t *testing.T) {
 
 func BenchmarkPtr(b *testing.B) {
 	testString := "benchmark test string"
-	
+
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		_ = Ptr(testString)
