@@ -31,15 +31,34 @@ type Client struct {
 	closeOnce  sync.Once          // Ensures closedCh is only closed once
 
 	// Event handlers - these functions are called when corresponding events are received
-	handlerMu            sync.RWMutex             // Protects event handler fields
-	onError              func(ErrorEvent)         // Called for API errors
-	onSessionCreated     func(SessionCreated)     // Called when session is established
-	onSessionUpdated     func(SessionUpdated)     // Called when session config changes
-	onRateLimitsUpdated  func(RateLimitsUpdated)  // Called for rate limit updates
-	onResponseTextDelta  func(ResponseTextDelta)  // Called for streaming text responses
-	onResponseTextDone   func(ResponseTextDone)   // Called when text response completes
-	onResponseAudioDelta func(ResponseAudioDelta) // Called for streaming audio responses
-	onResponseAudioDone  func(ResponseAudioDone)  // Called when audio response completes
+	handlerMu                                        sync.RWMutex                                               // Protects event handler fields
+	onError                                          func(ErrorEvent)                                           // Called for API errors
+	onSessionCreated                                 func(SessionCreated)                                       // Called when session is established
+	onSessionUpdated                                 func(SessionUpdated)                                       // Called when session config changes
+	onRateLimitsUpdated                              func(RateLimitsUpdated)                                    // Called for rate limit updates
+	onResponseTextDelta                              func(ResponseTextDelta)                                    // Called for streaming text responses
+	onResponseTextDone                               func(ResponseTextDone)                                     // Called when text response completes
+	onResponseAudioDelta                             func(ResponseAudioDelta)                                   // Called for streaming audio responses
+	onResponseAudioDone                              func(ResponseAudioDone)                                    // Called when audio response completes
+	onInputAudioBufferSpeechStarted                  func(InputAudioBufferSpeechStarted)                        // Called when user starts speaking
+	onInputAudioBufferSpeechStopped                  func(InputAudioBufferSpeechStopped)                        // Called when user stops speaking
+	onInputAudioBufferCommitted                      func(InputAudioBufferCommitted)                            // Called when audio buffer is committed
+	onInputAudioBufferCleared                        func(InputAudioBufferCleared)                              // Called when audio buffer is cleared
+	onConversationItemCreated                        func(ConversationItemCreated)                              // Called when conversation item is created
+	onConversationItemInputAudioTranscriptionCompleted func(ConversationItemInputAudioTranscriptionCompleted) // Called when audio transcription completes
+	onConversationItemInputAudioTranscriptionFailed func(ConversationItemInputAudioTranscriptionFailed)       // Called when audio transcription fails
+	onConversationItemTruncated                      func(ConversationItemTruncated)                            // Called when conversation item is truncated
+	onConversationItemDeleted                        func(ConversationItemDeleted)                              // Called when conversation item is deleted
+	onResponseCreated                                func(ResponseCreated)                                      // Called when response is created
+	onResponseDone                                   func(ResponseDone)                                         // Called when response is complete
+	onResponseOutputItemAdded                        func(ResponseOutputItemAdded)                              // Called when output item is added
+	onResponseOutputItemDone                         func(ResponseOutputItemDone)                               // Called when output item is complete
+	onResponseContentPartAdded                       func(ResponseContentPartAdded)                             // Called when content part is added
+	onResponseContentPartDone                        func(ResponseContentPartDone)                              // Called when content part is complete
+	onResponseFunctionCallArgumentsDelta             func(ResponseFunctionCallArgumentsDelta)                   // Called for streaming function arguments
+	onResponseFunctionCallArgumentsDone              func(ResponseFunctionCallArgumentsDone)                    // Called when function arguments are complete
+	onResponseAudioTranscriptDelta                   func(ResponseAudioTranscriptDelta)                         // Called for streaming audio transcript
+	onResponseAudioTranscriptDone                    func(ResponseAudioTranscriptDone)                          // Called when audio transcript is complete
 }
 
 // Dial establishes a WebSocket connection to the Azure OpenAI Realtime API.
@@ -210,6 +229,139 @@ func (c *Client) OnResponseAudioDone(fn func(ResponseAudioDone)) {
 	c.onResponseAudioDone = fn
 }
 
+// OnInputAudioBufferSpeechStarted registers a callback for speech start events.
+func (c *Client) OnInputAudioBufferSpeechStarted(fn func(InputAudioBufferSpeechStarted)) {
+	c.handlerMu.Lock()
+	defer c.handlerMu.Unlock()
+	c.onInputAudioBufferSpeechStarted = fn
+}
+
+// OnInputAudioBufferSpeechStopped registers a callback for speech stop events.
+func (c *Client) OnInputAudioBufferSpeechStopped(fn func(InputAudioBufferSpeechStopped)) {
+	c.handlerMu.Lock()
+	defer c.handlerMu.Unlock()
+	c.onInputAudioBufferSpeechStopped = fn
+}
+
+// OnInputAudioBufferCommitted registers a callback for audio buffer committed events.
+func (c *Client) OnInputAudioBufferCommitted(fn func(InputAudioBufferCommitted)) {
+	c.handlerMu.Lock()
+	defer c.handlerMu.Unlock()
+	c.onInputAudioBufferCommitted = fn
+}
+
+// OnInputAudioBufferCleared registers a callback for audio buffer cleared events.
+func (c *Client) OnInputAudioBufferCleared(fn func(InputAudioBufferCleared)) {
+	c.handlerMu.Lock()
+	defer c.handlerMu.Unlock()
+	c.onInputAudioBufferCleared = fn
+}
+
+// OnConversationItemCreated registers a callback for conversation item created events.
+func (c *Client) OnConversationItemCreated(fn func(ConversationItemCreated)) {
+	c.handlerMu.Lock()
+	defer c.handlerMu.Unlock()
+	c.onConversationItemCreated = fn
+}
+
+// OnConversationItemInputAudioTranscriptionCompleted registers a callback for audio transcription completed events.
+func (c *Client) OnConversationItemInputAudioTranscriptionCompleted(fn func(ConversationItemInputAudioTranscriptionCompleted)) {
+	c.handlerMu.Lock()
+	defer c.handlerMu.Unlock()
+	c.onConversationItemInputAudioTranscriptionCompleted = fn
+}
+
+// OnConversationItemInputAudioTranscriptionFailed registers a callback for audio transcription failed events.
+func (c *Client) OnConversationItemInputAudioTranscriptionFailed(fn func(ConversationItemInputAudioTranscriptionFailed)) {
+	c.handlerMu.Lock()
+	defer c.handlerMu.Unlock()
+	c.onConversationItemInputAudioTranscriptionFailed = fn
+}
+
+// OnConversationItemTruncated registers a callback for conversation item truncated events.
+func (c *Client) OnConversationItemTruncated(fn func(ConversationItemTruncated)) {
+	c.handlerMu.Lock()
+	defer c.handlerMu.Unlock()
+	c.onConversationItemTruncated = fn
+}
+
+// OnConversationItemDeleted registers a callback for conversation item deleted events.
+func (c *Client) OnConversationItemDeleted(fn func(ConversationItemDeleted)) {
+	c.handlerMu.Lock()
+	defer c.handlerMu.Unlock()
+	c.onConversationItemDeleted = fn
+}
+
+// OnResponseCreated registers a callback for response created events.
+func (c *Client) OnResponseCreated(fn func(ResponseCreated)) {
+	c.handlerMu.Lock()
+	defer c.handlerMu.Unlock()
+	c.onResponseCreated = fn
+}
+
+// OnResponseDone registers a callback for response done events.
+func (c *Client) OnResponseDone(fn func(ResponseDone)) {
+	c.handlerMu.Lock()
+	defer c.handlerMu.Unlock()
+	c.onResponseDone = fn
+}
+
+// OnResponseOutputItemAdded registers a callback for response output item added events.
+func (c *Client) OnResponseOutputItemAdded(fn func(ResponseOutputItemAdded)) {
+	c.handlerMu.Lock()
+	defer c.handlerMu.Unlock()
+	c.onResponseOutputItemAdded = fn
+}
+
+// OnResponseOutputItemDone registers a callback for response output item done events.
+func (c *Client) OnResponseOutputItemDone(fn func(ResponseOutputItemDone)) {
+	c.handlerMu.Lock()
+	defer c.handlerMu.Unlock()
+	c.onResponseOutputItemDone = fn
+}
+
+// OnResponseContentPartAdded registers a callback for response content part added events.
+func (c *Client) OnResponseContentPartAdded(fn func(ResponseContentPartAdded)) {
+	c.handlerMu.Lock()
+	defer c.handlerMu.Unlock()
+	c.onResponseContentPartAdded = fn
+}
+
+// OnResponseContentPartDone registers a callback for response content part done events.
+func (c *Client) OnResponseContentPartDone(fn func(ResponseContentPartDone)) {
+	c.handlerMu.Lock()
+	defer c.handlerMu.Unlock()
+	c.onResponseContentPartDone = fn
+}
+
+// OnResponseFunctionCallArgumentsDelta registers a callback for function call arguments delta events.
+func (c *Client) OnResponseFunctionCallArgumentsDelta(fn func(ResponseFunctionCallArgumentsDelta)) {
+	c.handlerMu.Lock()
+	defer c.handlerMu.Unlock()
+	c.onResponseFunctionCallArgumentsDelta = fn
+}
+
+// OnResponseFunctionCallArgumentsDone registers a callback for function call arguments done events.
+func (c *Client) OnResponseFunctionCallArgumentsDone(fn func(ResponseFunctionCallArgumentsDone)) {
+	c.handlerMu.Lock()
+	defer c.handlerMu.Unlock()
+	c.onResponseFunctionCallArgumentsDone = fn
+}
+
+// OnResponseAudioTranscriptDelta registers a callback for audio transcript delta events.
+func (c *Client) OnResponseAudioTranscriptDelta(fn func(ResponseAudioTranscriptDelta)) {
+	c.handlerMu.Lock()
+	defer c.handlerMu.Unlock()
+	c.onResponseAudioTranscriptDelta = fn
+}
+
+// OnResponseAudioTranscriptDone registers a callback for audio transcript done events.
+func (c *Client) OnResponseAudioTranscriptDone(fn func(ResponseAudioTranscriptDone)) {
+	c.handlerMu.Lock()
+	defer c.handlerMu.Unlock()
+	c.onResponseAudioTranscriptDone = fn
+}
+
 // readLoop continuously reads messages from the WebSocket connection.
 // It runs in a separate goroutine and handles message parsing and event dispatching.
 // The loop terminates when the context is canceled or the connection fails.
@@ -334,8 +486,161 @@ func (c *Client) dispatch(env envelope, raw []byte) {
 			c.onResponseAudioDone(e)
 		}
 		c.handlerMu.RUnlock()
+	case "input_audio_buffer.speech_started":
+		var e InputAudioBufferSpeechStarted
+		_ = json.Unmarshal(raw, &e)
+		c.handlerMu.RLock()
+		if c.onInputAudioBufferSpeechStarted != nil {
+			c.onInputAudioBufferSpeechStarted(e)
+		}
+		c.handlerMu.RUnlock()
+	case "input_audio_buffer.speech_stopped":
+		var e InputAudioBufferSpeechStopped
+		_ = json.Unmarshal(raw, &e)
+		c.handlerMu.RLock()
+		if c.onInputAudioBufferSpeechStopped != nil {
+			c.onInputAudioBufferSpeechStopped(e)
+		}
+		c.handlerMu.RUnlock()
+	case "input_audio_buffer.committed":
+		var e InputAudioBufferCommitted
+		_ = json.Unmarshal(raw, &e)
+		c.handlerMu.RLock()
+		if c.onInputAudioBufferCommitted != nil {
+			c.onInputAudioBufferCommitted(e)
+		}
+		c.handlerMu.RUnlock()
+	case "input_audio_buffer.cleared":
+		var e InputAudioBufferCleared
+		_ = json.Unmarshal(raw, &e)
+		c.handlerMu.RLock()
+		if c.onInputAudioBufferCleared != nil {
+			c.onInputAudioBufferCleared(e)
+		}
+		c.handlerMu.RUnlock()
+	case "conversation.item.created":
+		var e ConversationItemCreated
+		_ = json.Unmarshal(raw, &e)
+		c.handlerMu.RLock()
+		if c.onConversationItemCreated != nil {
+			c.onConversationItemCreated(e)
+		}
+		c.handlerMu.RUnlock()
+	case "conversation.item.input_audio_transcription.completed":
+		var e ConversationItemInputAudioTranscriptionCompleted
+		_ = json.Unmarshal(raw, &e)
+		c.handlerMu.RLock()
+		if c.onConversationItemInputAudioTranscriptionCompleted != nil {
+			c.onConversationItemInputAudioTranscriptionCompleted(e)
+		}
+		c.handlerMu.RUnlock()
+	case "conversation.item.input_audio_transcription.failed":
+		var e ConversationItemInputAudioTranscriptionFailed
+		_ = json.Unmarshal(raw, &e)
+		c.handlerMu.RLock()
+		if c.onConversationItemInputAudioTranscriptionFailed != nil {
+			c.onConversationItemInputAudioTranscriptionFailed(e)
+		}
+		c.handlerMu.RUnlock()
+	case "conversation.item.truncated":
+		var e ConversationItemTruncated
+		_ = json.Unmarshal(raw, &e)
+		c.handlerMu.RLock()
+		if c.onConversationItemTruncated != nil {
+			c.onConversationItemTruncated(e)
+		}
+		c.handlerMu.RUnlock()
+	case "conversation.item.deleted":
+		var e ConversationItemDeleted
+		_ = json.Unmarshal(raw, &e)
+		c.handlerMu.RLock()
+		if c.onConversationItemDeleted != nil {
+			c.onConversationItemDeleted(e)
+		}
+		c.handlerMu.RUnlock()
+	case "response.created":
+		var e ResponseCreated
+		_ = json.Unmarshal(raw, &e)
+		c.handlerMu.RLock()
+		if c.onResponseCreated != nil {
+			c.onResponseCreated(e)
+		}
+		c.handlerMu.RUnlock()
+	case "response.done":
+		var e ResponseDone
+		_ = json.Unmarshal(raw, &e)
+		c.handlerMu.RLock()
+		if c.onResponseDone != nil {
+			c.onResponseDone(e)
+		}
+		c.handlerMu.RUnlock()
+	case "response.output_item.added":
+		var e ResponseOutputItemAdded
+		_ = json.Unmarshal(raw, &e)
+		c.handlerMu.RLock()
+		if c.onResponseOutputItemAdded != nil {
+			c.onResponseOutputItemAdded(e)
+		}
+		c.handlerMu.RUnlock()
+	case "response.output_item.done":
+		var e ResponseOutputItemDone
+		_ = json.Unmarshal(raw, &e)
+		c.handlerMu.RLock()
+		if c.onResponseOutputItemDone != nil {
+			c.onResponseOutputItemDone(e)
+		}
+		c.handlerMu.RUnlock()
+	case "response.content_part.added":
+		var e ResponseContentPartAdded
+		_ = json.Unmarshal(raw, &e)
+		c.handlerMu.RLock()
+		if c.onResponseContentPartAdded != nil {
+			c.onResponseContentPartAdded(e)
+		}
+		c.handlerMu.RUnlock()
+	case "response.content_part.done":
+		var e ResponseContentPartDone
+		_ = json.Unmarshal(raw, &e)
+		c.handlerMu.RLock()
+		if c.onResponseContentPartDone != nil {
+			c.onResponseContentPartDone(e)
+		}
+		c.handlerMu.RUnlock()
+	case "response.function_call_arguments.delta":
+		var e ResponseFunctionCallArgumentsDelta
+		_ = json.Unmarshal(raw, &e)
+		c.handlerMu.RLock()
+		if c.onResponseFunctionCallArgumentsDelta != nil {
+			c.onResponseFunctionCallArgumentsDelta(e)
+		}
+		c.handlerMu.RUnlock()
+	case "response.function_call_arguments.done":
+		var e ResponseFunctionCallArgumentsDone
+		_ = json.Unmarshal(raw, &e)
+		c.handlerMu.RLock()
+		if c.onResponseFunctionCallArgumentsDone != nil {
+			c.onResponseFunctionCallArgumentsDone(e)
+		}
+		c.handlerMu.RUnlock()
+	case "response.audio_transcript.delta":
+		var e ResponseAudioTranscriptDelta
+		_ = json.Unmarshal(raw, &e)
+		c.handlerMu.RLock()
+		if c.onResponseAudioTranscriptDelta != nil {
+			c.onResponseAudioTranscriptDelta(e)
+		}
+		c.handlerMu.RUnlock()
+	case "response.audio_transcript.done":
+		var e ResponseAudioTranscriptDone
+		_ = json.Unmarshal(raw, &e)
+		c.handlerMu.RLock()
+		if c.onResponseAudioTranscriptDone != nil {
+			c.onResponseAudioTranscriptDone(e)
+		}
+		c.handlerMu.RUnlock()
 	default:
-		// extend as needed
+		// Log unknown event types for debugging
+		c.log("unknown_event", map[string]any{"type": env.Type})
 	}
 }
 

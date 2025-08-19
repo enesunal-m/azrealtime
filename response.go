@@ -88,3 +88,14 @@ func ValidateCreateResponseOptions(opts CreateResponseOptions) error {
 
 	return nil
 }
+
+// CancelResponse cancels an in-progress response.
+// This stops the assistant from continuing to generate the current response.
+func (c *Client) CancelResponse(ctx context.Context) error {
+	if ctx == nil {
+		return NewSendError("response.cancel", "", errors.New("context cannot be nil"))
+	}
+
+	payload := map[string]any{"type": "response.cancel"}
+	return c.send(ctx, payload)
+}

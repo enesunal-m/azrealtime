@@ -95,3 +95,182 @@ type ResponseAudioDone struct {
 	OutputIndex  int    `json:"output_index"`  // Index of this output in the response
 	ContentIndex int    `json:"content_index"` // Index of this content within the output
 }
+
+// InputAudioBufferSpeechStarted indicates the start of speech in the input audio buffer.
+// This event is generated when the server detects the beginning of speech from the user.
+type InputAudioBufferSpeechStarted struct {
+	Type    string `json:"type"`     // Always "input_audio_buffer.speech_started"
+	EventID string `json:"event_id"` // Unique identifier for this event
+	AudioStartMs int `json:"audio_start_ms"` // Milliseconds from the beginning of the input audio buffer
+	ItemID  string `json:"item_id"`  // The ID of the user message item that will be created
+}
+
+// InputAudioBufferSpeechStopped indicates the end of speech in the input audio buffer.
+// This event is generated when the server detects the end of speech from the user.
+type InputAudioBufferSpeechStopped struct {
+	Type    string `json:"type"`     // Always "input_audio_buffer.speech_stopped"
+	EventID string `json:"event_id"` // Unique identifier for this event
+	AudioEndMs int `json:"audio_end_ms"` // Milliseconds from the beginning of the input audio buffer
+	ItemID  string `json:"item_id"`  // The ID of the user message item that will be created
+}
+
+// InputAudioBufferCommitted indicates that the input audio buffer has been committed.
+type InputAudioBufferCommitted struct {
+	Type           string `json:"type"`            // Always "input_audio_buffer.committed"
+	EventID        string `json:"event_id"`        // Unique identifier for this event
+	PreviousItemID string `json:"previous_item_id"` // The ID of the preceding item in the conversation
+	ItemID         string `json:"item_id"`         // The ID of the user message item that will be created
+}
+
+// InputAudioBufferCleared indicates that the input audio buffer has been cleared.
+type InputAudioBufferCleared struct {
+	Type    string `json:"type"`     // Always "input_audio_buffer.cleared"
+	EventID string `json:"event_id"` // Unique identifier for this event
+}
+
+// ConversationItemCreated indicates that a conversation item has been created.
+type ConversationItemCreated struct {
+	Type           string           `json:"type"`             // Always "conversation.item.created"
+	EventID        string           `json:"event_id"`         // Unique identifier for this event
+	PreviousItemID string           `json:"previous_item_id"` // The ID of the preceding item
+	Item           ConversationItem `json:"item"`             // The created conversation item
+}
+
+// ConversationItemInputAudioTranscriptionCompleted indicates that transcription of user audio is complete.
+type ConversationItemInputAudioTranscriptionCompleted struct {
+	Type         string `json:"type"`          // Always "conversation.item.input_audio_transcription.completed"
+	EventID      string `json:"event_id"`      // Unique identifier for this event
+	ItemID       string `json:"item_id"`       // The ID of the user message item
+	ContentIndex int    `json:"content_index"` // The index of the content part containing the audio
+	Transcript   string `json:"transcript"`    // The transcribed text
+}
+
+// ConversationItemInputAudioTranscriptionFailed indicates that transcription of user audio failed.
+type ConversationItemInputAudioTranscriptionFailed struct {
+	Type         string `json:"type"`          // Always "conversation.item.input_audio_transcription.failed"
+	EventID      string `json:"event_id"`      // Unique identifier for this event
+	ItemID       string `json:"item_id"`       // The ID of the user message item
+	ContentIndex int    `json:"content_index"` // The index of the content part containing the audio
+	Error        struct {
+		Type    string `json:"type"`    // The type of error
+		Code    string `json:"code"`    // Error code, if any
+		Message string `json:"message"` // A human-readable error message
+		Param   string `json:"param"`   // Parameter related to the error, if any
+	} `json:"error"` // Details of the transcription error
+}
+
+// ConversationItemTruncated indicates that a conversation item has been truncated.
+type ConversationItemTruncated struct {
+	Type         string `json:"type"`          // Always "conversation.item.truncated"
+	EventID      string `json:"event_id"`      // Unique identifier for this event
+	ItemID       string `json:"item_id"`       // The ID of the assistant message item
+	ContentIndex int    `json:"content_index"` // The index of the content part that was truncated
+	AudioEndMs   int    `json:"audio_end_ms"`  // The duration up to which the audio was truncated
+}
+
+// ConversationItemDeleted indicates that a conversation item has been deleted.
+type ConversationItemDeleted struct {
+	Type    string `json:"type"`     // Always "conversation.item.deleted"
+	EventID string `json:"event_id"` // Unique identifier for this event
+	ItemID  string `json:"item_id"`  // The ID of the deleted item
+}
+
+// ResponseCreated indicates that a response has been created.
+type ResponseCreated struct {
+	Type     string           `json:"type"`      // Always "response.created"
+	EventID  string           `json:"event_id"`  // Unique identifier for this event
+	Response ResponseObject   `json:"response"`  // The response resource
+}
+
+// ResponseDone indicates that a response is complete.
+type ResponseDone struct {
+	Type     string         `json:"type"`      // Always "response.done"
+	EventID  string         `json:"event_id"`  // Unique identifier for this event
+	Response ResponseObject `json:"response"`  // The response resource
+}
+
+// ResponseOutputItemAdded indicates that a new output item has been added to the response.
+type ResponseOutputItemAdded struct {
+	Type        string           `json:"type"`         // Always "response.output_item.added"
+	EventID     string           `json:"event_id"`     // Unique identifier for this event
+	ResponseID  string           `json:"response_id"`  // The ID of the response
+	OutputIndex int              `json:"output_index"` // The index of the output item
+	Item        ConversationItem `json:"item"`         // The item that was added
+}
+
+// ResponseOutputItemDone indicates that an output item is complete.
+type ResponseOutputItemDone struct {
+	Type        string           `json:"type"`         // Always "response.output_item.done"
+	EventID     string           `json:"event_id"`     // Unique identifier for this event
+	ResponseID  string           `json:"response_id"`  // The ID of the response
+	OutputIndex int              `json:"output_index"` // The index of the output item
+	Item        ConversationItem `json:"item"`         // The completed item
+}
+
+// ResponseContentPartAdded indicates that a new content part has been added.
+type ResponseContentPartAdded struct {
+	Type         string      `json:"type"`          // Always "response.content_part.added"
+	EventID      string      `json:"event_id"`      // Unique identifier for this event
+	ResponseID   string      `json:"response_id"`   // The ID of the response
+	ItemID       string      `json:"item_id"`       // The ID of the item
+	OutputIndex  int         `json:"output_index"`  // The index of the output item
+	ContentIndex int         `json:"content_index"` // The index of the content part
+	Part         ContentPart `json:"part"`          // The content part that was added
+}
+
+// ResponseContentPartDone indicates that a content part is complete.
+type ResponseContentPartDone struct {
+	Type         string      `json:"type"`          // Always "response.content_part.done"
+	EventID      string      `json:"event_id"`      // Unique identifier for this event
+	ResponseID   string      `json:"response_id"`   // The ID of the response
+	ItemID       string      `json:"item_id"`       // The ID of the item
+	OutputIndex  int         `json:"output_index"`  // The index of the output item
+	ContentIndex int         `json:"content_index"` // The index of the content part
+	Part         ContentPart `json:"part"`          // The completed content part
+}
+
+// ResponseFunctionCallArgumentsDelta contains incremental function call arguments.
+type ResponseFunctionCallArgumentsDelta struct {
+	Type         string `json:"type"`          // Always "response.function_call_arguments.delta"
+	EventID      string `json:"event_id"`      // Unique identifier for this event
+	ResponseID   string `json:"response_id"`   // The ID of the response
+	ItemID       string `json:"item_id"`       // The ID of the function call item
+	OutputIndex  int    `json:"output_index"`  // The index of the output item
+	ContentIndex int    `json:"content_index"` // The index of the content part
+	CallID       string `json:"call_id"`       // The ID of the function call
+	Delta        string `json:"delta"`         // The incremental function arguments (JSON)
+}
+
+// ResponseFunctionCallArgumentsDone indicates that function call arguments are complete.
+type ResponseFunctionCallArgumentsDone struct {
+	Type         string `json:"type"`          // Always "response.function_call_arguments.done"
+	EventID      string `json:"event_id"`      // Unique identifier for this event
+	ResponseID   string `json:"response_id"`   // The ID of the response
+	ItemID       string `json:"item_id"`       // The ID of the function call item
+	OutputIndex  int    `json:"output_index"`  // The index of the output item
+	ContentIndex int    `json:"content_index"` // The index of the content part
+	CallID       string `json:"call_id"`       // The ID of the function call
+	Arguments    string `json:"arguments"`     // The final function arguments (JSON)
+}
+
+// ResponseAudioTranscriptDelta contains incremental transcript of audio response.
+type ResponseAudioTranscriptDelta struct {
+	Type         string `json:"type"`          // Always "response.audio_transcript.delta"
+	EventID      string `json:"event_id"`      // Unique identifier for this event
+	ResponseID   string `json:"response_id"`   // The ID of the response
+	ItemID       string `json:"item_id"`       // The ID of the item
+	OutputIndex  int    `json:"output_index"`  // The index of the output item
+	ContentIndex int    `json:"content_index"` // The index of the content part
+	Delta        string `json:"delta"`         // The incremental transcript text
+}
+
+// ResponseAudioTranscriptDone indicates that audio transcript is complete.
+type ResponseAudioTranscriptDone struct {
+	Type         string `json:"type"`          // Always "response.audio_transcript.done"
+	EventID      string `json:"event_id"`      // Unique identifier for this event
+	ResponseID   string `json:"response_id"`   // The ID of the response
+	ItemID       string `json:"item_id"`       // The ID of the item
+	OutputIndex  int    `json:"output_index"`  // The index of the output item
+	ContentIndex int    `json:"content_index"` // The index of the content part
+	Transcript   string `json:"transcript"`    // The final transcript text
+}

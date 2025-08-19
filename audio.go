@@ -125,3 +125,77 @@ func PCM16BytesFor(ms int, sampleRate int) int { return (ms * sampleRate * 2) / 
 
 // SleepApprox provides a simple sleep utility for timing audio operations.
 func SleepApprox(ms int) { time.Sleep(time.Duration(ms) * time.Millisecond) }
+
+// CreateConversationItem creates a new conversation item.
+// This allows you to add user messages, assistant messages, or function calls to the conversation.
+func (c *Client) CreateConversationItem(ctx context.Context, item ConversationItem) error {
+	if ctx == nil {
+		return NewSendError("conversation.item.create", "", errors.New("context cannot be nil"))
+	}
+
+	// Validate the conversation item
+	if item.Type == "" {
+		return NewSendError("conversation.item.create", "", errors.New("item type is required"))
+	}
+
+	// Validate content if present
+	if len(item.Content) > 0 {
+		for i, content := range item.Content {
+			if content.Type == "" {
+				return NewSendError("conversation.item.create", "", fmt.Errorf("content[%d].type is required", i))
+			}
+		}
+	}
+
+	payload := map[string]any{
+		"type": "conversation.item.create", 
+		"item": item,
+	}
+	return c.send(ctx, payload)
+}
+
+// TruncateConversationItem truncates a conversation item's content.
+// This is useful for removing parts of assistant messages or audio that you don't want.
+func (c *Client) TruncateConversationItem(ctx context.Context, itemID string, contentIndex int, audioEndMs int) error {
+	if ctx == nil {
+		return NewSendError("conversation.item.truncate", "", errors.New("context cannot be nil"))
+	}
+
+	if itemID == "" {
+		return NewSendError("conversation.item.truncate", "", errors.New("item ID is required"))
+	}
+
+	if contentIndex < 0 {
+		return NewSendError("conversation.item.truncate", "", errors.New("content index must be non-negative"))
+	}
+
+	if audioEndMs < 0 {
+		return NewSendError("conversation.item.truncate", "", errors.New("audio end time must be non-negative"))
+	}
+
+	payload := map[string]any{
+		"type":          "conversation.item.truncate",
+		"item_id":       itemID,
+		"content_index": contentIndex,
+		"audio_end_ms":  audioEndMs,
+	}
+	return c.send(ctx, payload)
+}
+
+// DeleteConversationItem deletes a conversation item.
+// This removes the item from the conversation history.
+func (c *Client) DeleteConversationItem(ctx context.Context, itemID string) error {
+	if ctx == nil {
+		return NewSendError("conversation.item.delete", "", errors.New("context cannot be nil"))
+	}
+
+	if itemID == "" {
+		return NewSendError("conversation.item.delete", "", errors.New("item ID is required"))
+	}
+
+	payload := map[string]any{
+		"type":    "conversation.item.delete",
+		"item_id": itemID,
+	}
+	return c.send(ctx, payload)
+}
