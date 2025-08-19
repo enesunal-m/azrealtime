@@ -43,6 +43,7 @@ Thumbs.db
 # Test artifacts
 coverage.html
 coverage.out
+coverage.txt
 
 # Example output files
 *.wav

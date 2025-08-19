@@ -1,7 +1,7 @@
 # Azure OpenAI Realtime Go Library
 
 [![Build Status](https://github.com/enesunal-m/azrealtime/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/enesunal-m/azrealtime/actions/workflows/ci.yml)
-[![codecov](https://codecov.io/gh/enesunal-m/azrealtime/branch/main/graph/badge.svg)](https://codecov.io/gh/enesunal-m/azrealtime)
+[![codecov](https://codecov.io/github/enesunal-m/azrealtime/graph/badge.svg?token=GAGOEHK4NJ)](https://codecov.io/github/enesunal-m/azrealtime)
 [![Go Report Card](https://goreportcard.com/badge/github.com/enesunal-m/azrealtime)](https://goreportcard.com/report/github.com/enesunal-m/azrealtime)
 [![Go Reference](https://pkg.go.dev/badge/github.com/enesunal-m/azrealtime.svg)](https://pkg.go.dev/github.com/enesunal-m/azrealtime)
 [![Release](https://img.shields.io/github/release/enesunal-m/azrealtime.svg?style=flat-square)](https://github.com/enesunal-m/azrealtime/releases)
@@ -69,7 +69,7 @@ func main() {
     // Configure client
     cfg := azrealtime.Config{
         ResourceEndpoint: os.Getenv("AZURE_OPENAI_ENDPOINT"),
-        Deployment:       os.Getenv("AZURE_OPENAI_REALTIME_DEPLOYMENT"), 
+        Deployment:       os.Getenv("AZURE_OPENAI_REALTIME_DEPLOYMENT"),
         APIVersion:       "2025-04-01-preview",
         Credential:       azrealtime.APIKey(os.Getenv("AZURE_OPENAI_API_KEY")),
         DialTimeout:      30 * time.Second,
@@ -152,7 +152,7 @@ export AZURE_OPENAI_API_VERSION="2025-04-01-preview"
 cfg := azrealtime.Config{
     ResourceEndpoint: "https://your-resource.openai.azure.com",
     Deployment:       "gpt-4o-realtime-preview",
-    APIVersion:       "2025-04-01-preview", 
+    APIVersion:       "2025-04-01-preview",
     Credential:       azrealtime.APIKey("your-api-key"), // or Bearer token
     DialTimeout:      30 * time.Second,
     HandshakeHeaders: http.Header{"Custom-Header": []string{"value"}},
@@ -168,7 +168,7 @@ cfg := azrealtime.Config{
 // API Key (most common)
 cfg.Credential = azrealtime.APIKey("your-api-key")
 
-// Bearer token (for Azure AD authentication)  
+// Bearer token (for Azure AD authentication)
 cfg.Credential = azrealtime.Bearer("your-bearer-token")
 ```
 
@@ -195,7 +195,7 @@ cfg := azrealtime.Config{
 logger := azrealtime.NewLogger(azrealtime.LogLevelInfo)
 sessionLogger := logger.WithContext(map[string]interface{}{
     "session_id": "abc123",
-    "user_id":    "user456", 
+    "user_id":    "user456",
 })
 
 sessionLogger.Info("user_connected", map[string]interface{}{
@@ -223,7 +223,7 @@ client, err := azrealtime.Dial(ctx, cfg)
 if err != nil {
     var configErr *azrealtime.ConfigError
     var connErr *azrealtime.ConnectionError
-    
+
     switch {
     case errors.As(err, &configErr):
         log.Printf("Configuration error in %s: %s", configErr.Field, configErr.Message)
@@ -247,7 +247,7 @@ client.OnResponseAudioDelta(func(event azrealtime.ResponseAudioDelta) {
 
 client.OnResponseAudioDone(func(event azrealtime.ResponseAudioDone) {
     pcmData := audioAssembler.OnDone(event.ResponseID)
-    
+
     // Convert to WAV for saving/playback
     wavData := azrealtime.WAVFromPCM16Mono(pcmData, azrealtime.DefaultSampleRate)
     os.WriteFile("response.wav", wavData, 0644)
@@ -329,7 +329,7 @@ For browser integration using WebRTC:
    // Get ephemeral token from your server
    const response = await fetch('/api/ephemeral-token');
    const { sessionId, ephemeralKey } = await response.json();
-   
+
    // Use with WebRTC client
    const client = new RealtimeWebRTCClient(sessionId, ephemeralKey);
    ```
@@ -342,7 +342,7 @@ See [`examples/webrtc-browser/`](./examples/webrtc-browser/) for a complete impl
 
 - **`Config`**: Client configuration options
 - **`Client`**: Main WebSocket client
-- **`Session`**: AI assistant configuration  
+- **`Session`**: AI assistant configuration
 - **`CreateResponseOptions`**: Response generation settings
 
 ### Event Types
