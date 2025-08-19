@@ -28,6 +28,7 @@ type Client struct {
 	writeMu    sync.Mutex         // Protects writes to the WebSocket
 	readCancel context.CancelFunc // Cancels the read loop when closing
 	closedCh   chan struct{}      // Signals when the client is closed
+	closeOnce  sync.Once          // Ensures closedCh is only closed once
 
 	// Event handlers - these functions are called when corresponding events are received
 	handlerMu            sync.RWMutex             // Protects event handler fields
@@ -143,11 +144,9 @@ func (c *Client) Close() error {
 	c.writeMu.Unlock()
 
 	// Signal that the client is closed
-	select {
-	case <-c.closedCh:
-	default:
+	c.closeOnce.Do(func() {
 		close(c.closedCh)
-	}
+	})
 	return nil
 }
 
@@ -223,11 +222,9 @@ func (c *Client) readLoop(ctx context.Context) {
 			c.conn = nil
 		}
 		c.writeMu.Unlock()
-		select {
-		case <-c.closedCh:
-		default:
+		c.closeOnce.Do(func() {
 			close(c.closedCh)
-		}
+		})
 	}()
 
 	for {
