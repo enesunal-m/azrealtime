@@ -15,7 +15,7 @@ func main() {
 	cfg := azrealtime.Config{
 		ResourceEndpoint: os.Getenv("AZURE_OPENAI_ENDPOINT"),
 		Deployment:       os.Getenv("AZURE_OPENAI_REALTIME_DEPLOYMENT"),
-		APIVersion:       "2025-04-01-preview",
+		APIVersion:       "2024-10-01-preview",
 		Credential:       azrealtime.APIKey(os.Getenv("AZURE_OPENAI_API_KEY")), // or Bearer(token)
 		DialTimeout:      15 * time.Second,
 		Logger:           func(event string, fields map[string]any) { log.Printf("%s: %+v", event, fields) },

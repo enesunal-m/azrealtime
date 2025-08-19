@@ -45,11 +45,42 @@ type InputTranscription struct {
 
 // TurnDetection configures voice activity detection and response timing.
 type TurnDetection struct {
-	Type              string  `json:"type"`                          // "server_vad" for server-side voice activity detection
-	Threshold         float64 `json:"threshold,omitempty"`           // Voice activity detection sensitivity (0.0-1.0)
-	PrefixPaddingMS   int     `json:"prefix_padding_ms,omitempty"`   // Audio included before speech starts (ms)
-	SilenceDurationMS int     `json:"silence_duration_ms,omitempty"` // Silence duration to trigger end of turn (ms)
-	CreateResponse    bool    `json:"create_response,omitempty"`     // Whether to automatically create response
+	// Type specifies the turn detection method.
+	// Supported values: "server_vad", "semantic_vad"
+	Type string `json:"type"`
+
+	// Threshold is the activation threshold for server VAD (0.0-1.0).
+	// Higher values reduce false positives in noisy environments.
+	// Lower values reduce false negatives in quiet environments.
+	// Default: 0.5. Only applicable for server_vad.
+	Threshold float64 `json:"threshold,omitempty"`
+
+	// PrefixPaddingMS is the duration of speech audio (in milliseconds) 
+	// to include before the start of detected speech.
+	// Default: 300ms. Only applicable for server_vad.
+	PrefixPaddingMS int `json:"prefix_padding_ms,omitempty"`
+
+	// SilenceDurationMS is the duration of silence (in milliseconds) 
+	// to detect the end of speech.
+	// Lower values = quicker response but may cut off speech.
+	// Higher values = wait longer but more complete speech.
+	// Default: 200ms. Only applicable for server_vad.
+	SilenceDurationMS int `json:"silence_duration_ms,omitempty"`
+
+	// CreateResponse indicates whether the server will automatically 
+	// create a response when VAD detects speech end.
+	// Default: true.
+	CreateResponse bool `json:"create_response,omitempty"`
+
+	// InterruptResponse indicates whether the server will automatically 
+	// interrupt any ongoing response when a VAD start event occurs.
+	// Default: true.
+	InterruptResponse bool `json:"interrupt_response,omitempty"`
+
+	// Eagerness controls the model's eagerness to respond and interrupt.
+	// Values: "low" (wait longer), "high" (chunk quickly), "auto"/"medium" (balanced).
+	// Default: "auto". Only applicable for semantic_vad.
+	Eagerness string `json:"eagerness,omitempty"`
 }
 
 // SessionUpdate sends a session configuration update to the API.
@@ -102,17 +133,33 @@ func ValidateSession(s Session) error {
 		if s.TurnDetection.Type == "" {
 			return errors.New("turn detection type cannot be empty")
 		}
-		if s.TurnDetection.Type != "server_vad" {
-			return fmt.Errorf("invalid turn detection type %q, must be 'server_vad'", s.TurnDetection.Type)
+		
+		validTypes := []string{"server_vad", "semantic_vad"}
+		if !slices.Contains(validTypes, s.TurnDetection.Type) {
+			return fmt.Errorf("invalid turn detection type %q, must be one of: %v", s.TurnDetection.Type, validTypes)
 		}
-		if s.TurnDetection.Threshold < 0.0 || s.TurnDetection.Threshold > 1.0 {
-			return fmt.Errorf("turn detection threshold must be between 0.0 and 1.0, got %f", s.TurnDetection.Threshold)
+		
+		// Server VAD specific validations
+		if s.TurnDetection.Type == "server_vad" {
+			if s.TurnDetection.Threshold < 0.0 || s.TurnDetection.Threshold > 1.0 {
+				return fmt.Errorf("turn detection threshold must be between 0.0 and 1.0, got %f", s.TurnDetection.Threshold)
+			}
+			if s.TurnDetection.PrefixPaddingMS < 0 {
+				return fmt.Errorf("prefix padding must be non-negative, got %d", s.TurnDetection.PrefixPaddingMS)
+			}
+			if s.TurnDetection.SilenceDurationMS < 0 {
+				return fmt.Errorf("silence duration must be non-negative, got %d", s.TurnDetection.SilenceDurationMS)
+			}
 		}
-		if s.TurnDetection.PrefixPaddingMS < 0 {
-			return fmt.Errorf("prefix padding must be non-negative, got %d", s.TurnDetection.PrefixPaddingMS)
-		}
-		if s.TurnDetection.SilenceDurationMS < 0 {
-			return fmt.Errorf("silence duration must be non-negative, got %d", s.TurnDetection.SilenceDurationMS)
+		
+		// Semantic VAD specific validations
+		if s.TurnDetection.Type == "semantic_vad" {
+			if s.TurnDetection.Eagerness != "" {
+				validEagerness := []string{"low", "medium", "high", "auto"}
+				if !slices.Contains(validEagerness, s.TurnDetection.Eagerness) {
+					return fmt.Errorf("invalid eagerness %q, must be one of: %v", s.TurnDetection.Eagerness, validEagerness)
+				}
+			}
 		}
 	}
 

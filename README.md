@@ -4,44 +4,39 @@
 [![codecov](https://codecov.io/github/enesunal-m/azrealtime/graph/badge.svg?token=GAGOEHK4NJ)](https://codecov.io/github/enesunal-m/azrealtime)
 [![Go Report Card](https://goreportcard.com/badge/github.com/enesunal-m/azrealtime)](https://goreportcard.com/report/github.com/enesunal-m/azrealtime)
 [![Go Reference](https://pkg.go.dev/badge/github.com/enesunal-m/azrealtime.svg)](https://pkg.go.dev/github.com/enesunal-m/azrealtime)
-[![Release](https://img.shields.io/github/release/enesunal-m/azrealtime.svg?style=flat-square)](https://github.com/enesunal-m/azrealtime/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-A production-ready Go client library for Azure OpenAI's GPT-4o Realtime API, enabling real-time bidirectional communication with OpenAI's most capable multimodal model.
+A production-ready Go client library for Azure OpenAI's GPT-4o Realtime API, enabling real-time bidirectional communication with voice and text.
 
 ## Features
 
-✅ **Production Ready**
-- Comprehensive error handling with structured error types
-- Input validation and sanitization
-- Graceful connection management and cleanup
-- Rate limit monitoring and handling
-- Extensive test coverage (95%+)
-
-✅ **WebSocket Communication**
-- Real-time bidirectional messaging
-- Automatic connection management
-- Built-in keepalive and reconnection
-- Event-driven architecture
+✅ **Core Functionality**
+- WebSocket-based real-time communication
+- Audio streaming (PCM16, 24kHz, mono)
+- Text response streaming
+- Session configuration and management
+- Conversation item management
 
 ✅ **Audio Processing**
-- PCM16 audio streaming (24kHz, 16-bit, mono)
-- Audio chunk assembly and WAV conversion
-- Voice activity detection support
-- Audio format validation
+- PCM16 audio input/output support
+- Audio assembly and WAV conversion utilities
+- Server-side voice activity detection
+- Audio transcription support
 
-✅ **WebRTC Support**
-- Browser-compatible WebRTC integration
-- Ephemeral token management
-- Headless WebRTC for server applications
+✅ **Production Ready**
+- Comprehensive error handling with typed errors
+- Input validation and sanitization
+- Structured logging with configurable levels
+- Test coverage: 70.4%
+- Rate limit monitoring
 
 ✅ **Developer Experience**
-- Comprehensive documentation and examples
-- Type-safe API with full GoDoc coverage
-- Structured logging and debugging support
-- Multiple authentication methods
+- Type-safe API with full documentation
+- Multiple authentication methods (API Key, Bearer token)
+- Event-driven architecture with 27 event types
+- Conversation management (create, delete, truncate items)
 
-> **Note**: Azure GPT-4o Realtime is in public preview. Pin your `api-version` and monitor the [official documentation](https://docs.microsoft.com/en-us/azure/cognitive-services/openai/) for updates.
+> **Note**: Azure GPT-4o Realtime is in public preview. Use API version `2025-04-01-preview` and monitor the [official documentation](https://learn.microsoft.com/en-us/azure/ai-foundry/openai/realtime-audio-reference) for updates.
 
 ## Quick Start
 
@@ -114,23 +109,14 @@ func main() {
 
 ## Architecture
 
-The library provides three main components:
+The library provides a WebSocket-based client for Azure OpenAI Realtime API:
 
-### 1. Core WebSocket Client (`azrealtime`)
-- Connection management and event handling
-- Audio/text streaming and assembly
-- Session configuration and response generation
-- Comprehensive error handling and validation
-
-### 2. WebRTC Support (`azrealtime/webrtc`)
-- Ephemeral token generation for browser clients
-- Headless WebRTC connections for server applications
-- WebRTC session management
-
-### 3. Utilities and Examples
-- `cmd/ephemeral-issuer`: HTTP server for ephemeral tokens
-- `examples/`: Comprehensive usage examples
-- Audio processing utilities and helpers
+### Core Components
+- **WebSocket Client**: Real-time bidirectional communication
+- **Event System**: 27 event types for comprehensive API coverage
+- **Audio Processing**: PCM16 streaming and WAV conversion utilities
+- **Session Management**: Voice, instructions, and turn detection configuration
+- **Error Handling**: Structured error types with detailed context
 
 ## Configuration
 
@@ -309,32 +295,39 @@ go test -v ./azrealtime -run TestDial
 ```
 
 The library includes:
-- Unit tests for all core functionality
+- Unit tests for all core functionality  
 - Integration tests with mock servers
-- Benchmarks for performance validation
-- 95%+ test coverage
+- Validation tests for input sanitization
+- Test coverage: 70.4%
 
-## WebRTC Support
+## Common Issues and Solutions
 
-For browser integration using WebRTC:
+### Audio File Processing
+```go
+// Correct approach: wait for server events before creating response
+client.OnInputAudioBufferCommitted(func(event azrealtime.InputAudioBufferCommitted) {
+    log.Printf("Audio committed: %s", event.ItemID)
+    // Now create response
+    client.CreateResponse(ctx, azrealtime.CreateResponseOptions{
+        Modalities: []string{"text", "audio"},
+    })
+})
 
-1. **Start the ephemeral token server:**
-   ```bash
-   cd cmd/ephemeral-issuer
-   go run main.go
-   ```
+// Send audio and let server VAD handle it
+client.AppendPCM16(ctx, audioData)
+// Don't manually commit - let server VAD decide
+```
 
-2. **Configure your web application:**
-   ```javascript
-   // Get ephemeral token from your server
-   const response = await fetch('/api/ephemeral-token');
-   const { sessionId, ephemeralKey } = await response.json();
-
-   // Use with WebRTC client
-   const client = new RealtimeWebRTCClient(sessionId, ephemeralKey);
-   ```
-
-See [`examples/webrtc-browser/`](./examples/webrtc-browser/) for a complete implementation.
+### Microphone Streaming
+```go
+// Use server VAD, don't manually commit every chunk
+session := azrealtime.Session{
+    TurnDetection: &azrealtime.TurnDetection{
+        Type:           "server_vad",
+        CreateResponse: true, // Let server create responses automatically
+    },
+}
+```
 
 ## API Reference
 
@@ -347,11 +340,27 @@ See [`examples/webrtc-browser/`](./examples/webrtc-browser/) for a complete impl
 
 ### Event Types
 
-- **`ErrorEvent`**: API errors and warnings
-- **`SessionCreated/Updated`**: Session lifecycle
-- **`ResponseTextDelta/Done`**: Streaming text responses
-- **`ResponseAudioDelta/Done`**: Streaming audio responses
-- **`RateLimitsUpdated`**: Rate limiting information
+**Session Events:**
+- `SessionCreated` / `SessionUpdated`: Session lifecycle management
+- `ErrorEvent`: API errors and warnings
+- `RateLimitsUpdated`: Rate limiting information
+
+**Audio Input Events:**
+- `InputAudioBufferSpeechStarted` / `InputAudioBufferSpeechStopped`: Voice activity detection
+- `InputAudioBufferCommitted` / `InputAudioBufferCleared`: Audio buffer management
+
+**Conversation Events:**
+- `ConversationItemCreated` / `ConversationItemDeleted` / `ConversationItemTruncated`: Item management
+- `ConversationItemInputAudioTranscriptionCompleted` / `ConversationItemInputAudioTranscriptionFailed`: Transcription events
+
+**Response Events:**
+- `ResponseCreated` / `ResponseDone`: Response lifecycle
+- `ResponseTextDelta` / `ResponseTextDone`: Streaming text responses
+- `ResponseAudioDelta` / `ResponseAudioDone`: Streaming audio responses
+- `ResponseAudioTranscriptDelta` / `ResponseAudioTranscriptDone`: Audio transcription streaming
+- `ResponseOutputItemAdded` / `ResponseOutputItemDone`: Response item management
+- `ResponseContentPartAdded` / `ResponseContentPartDone`: Content part management
+- `ResponseFunctionCallArgumentsDelta` / `ResponseFunctionCallArgumentsDone`: Function call streaming
 
 ### Error Types
 
