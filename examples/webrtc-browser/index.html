@@ -1,31 +1,67 @@
 <!doctype html>
 <html>
-<head><meta charset="utf-8"><title>Azure Realtime WebRTC demo</title></head>
-<body>
-<h1>WebRTC demo (Azure Realtime)</h1>
-<button id="start">Start</button>
-<pre id="log"></pre>
-<script>
-const log = (...x) => document.getElementById('log').textContent += x.join(' ') + "\n";
-document.getElementById('start').onclick = async () => {
-  try {
-    const tok = await fetch("/token", { method: "POST" }).then(r => r.json());
-    const pc = new RTCPeerConnection();
-    const audio = document.createElement('audio'); audio.autoplay = true; document.body.appendChild(audio);
-    pc.ontrack = (e) => { audio.srcObject = e.streams[0]; };
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    pc.addTrack(stream.getAudioTracks()[0]);
-    const dc = pc.createDataChannel("realtime-channel");
-    dc.onopen = () => { log("dc open"); dc.send(JSON.stringify({ type:"session.update", session:{ instructions:"Be brief." } })); };
-    dc.onmessage = (e) => log("server:", e.data);
+    <head>
+        <meta charset="utf-8" />
+        <title>Azure Realtime WebRTC demo</title>
+    </head>
+    <body>
+        <h1>WebRTC demo (Azure Realtime)</h1>
+        <button id="start">Start</button>
+        <pre id="log"></pre>
+        <script>
+            const log = (...x) =>
+                (document.getElementById("log").textContent +=
+                    x.join(" ") + "\n");
+            document.getElementById("start").onclick = async () => {
+                try {
+                    const tok = await fetch("http://localhost:8080/token", {
+                        method: "POST",
+                    }).then((r) => r.json());
+                    const pc = new RTCPeerConnection();
+                    const audio = document.createElement("audio");
+                    audio.autoplay = true;
+                    document.body.appendChild(audio);
+                    pc.ontrack = (e) => {
+                        audio.srcObject = e.streams[0];
+                    };
+                    const stream = await navigator.mediaDevices.getUserMedia({
+                        audio: true,
+                    });
+                    pc.addTrack(stream.getAudioTracks()[0]);
+                    const dc = pc.createDataChannel("realtime-channel");
+                    dc.onopen = () => {
+                        log("dc open");
+                        dc.send(
+                            JSON.stringify({
+                                type: "session.update",
+                                session: { instructions: "Be brief." },
+                            }),
+                        );
+                    };
+                    dc.onmessage = (e) => log("server:", e.data);
 
-    const offer = await pc.createOffer(); await pc.setLocalDescription(offer);
-    const url = tok.region_url + "?model=" + encodeURIComponent(tok.deployment);
-    const ans = await fetch(url, { method:"POST", headers:{ "Authorization":"Bearer " + tok.ephemeral, "Content-Type":"application/sdp" }, body: offer.sdp });
-    const sdp = await ans.text(); await pc.setRemoteDescription({ type:"answer", sdp });
-    log("connected");
-  } catch (e) { console.error(e); log("error:", e); }
-};
-</script>
-</body>
+                    const offer = await pc.createOffer();
+                    await pc.setLocalDescription(offer);
+                    const url =
+                        tok.region_url +
+                        "?model=" +
+                        encodeURIComponent(tok.deployment);
+                    const ans = await fetch(url, {
+                        method: "POST",
+                        headers: {
+                            Authorization: "Bearer " + tok.ephemeral,
+                            "Content-Type": "application/sdp",
+                        },
+                        body: offer.sdp,
+                    });
+                    const sdp = await ans.text();
+                    await pc.setRemoteDescription({ type: "answer", sdp });
+                    log("connected");
+                } catch (e) {
+                    console.error(e);
+                    log("error:", e);
+                }
+            };
+        </script>
+    </body>
 </html>

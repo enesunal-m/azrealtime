@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Audio Worklet Test</title>
+</head>
+<body>
+    <h1>Audio Worklet Test</h1>
+    <button onclick="testAudio()">Test Audio Worklet</button>
+    <div id="output"></div>
+    
+    <script>
+        async function testAudio() {
+            const output = document.getElementById('output');
+            output.innerHTML = '';
+            
+            try {
+                // Test getUserMedia
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    audio: {
+                        sampleRate: 24000,
+                        channelCount: 1
+                    }
+                });
+                output.innerHTML += '<p>✅ getUserMedia: OK</p>';
+                
+                // Test AudioContext
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)({
+                    sampleRate: 24000
+                });
+                output.innerHTML += '<p>✅ AudioContext: OK</p>';
+                
+                // Test AudioWorklet
+                try {
+                    await audioContext.audioWorklet.addModule('audio-processor.js');
+                    output.innerHTML += '<p>✅ AudioWorklet: OK</p>';
+                    
+                    const workletNode = new AudioWorkletNode(audioContext, 'audio-processor');
+                    output.innerHTML += '<p>✅ AudioWorkletNode: OK</p>';
+                    
+                } catch (workletError) {
+                    output.innerHTML += `<p>❌ AudioWorklet: ${workletError.message}</p>`;
+                    output.innerHTML += '<p>Will use ScriptProcessorNode fallback</p>';
+                }
+                
+                stream.getTracks().forEach(track => track.stop());
+                
+            } catch (error) {
+                output.innerHTML += `<p>❌ Error: ${error.message}</p>`;
+            }
+        }
+    </script>
+</body>
+</html>
