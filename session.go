@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 )
 
 // Session defines the configuration for a realtime conversation session.
@@ -73,13 +74,7 @@ func ValidateSession(s Session) error {
 	// Validate voice if specified
 	if s.Voice != nil {
 		validVoices := []string{"alloy", "echo", "fable", "onyx", "nova", "shimmer", "verse"}
-		valid := false
-		for _, v := range validVoices {
-			if *s.Voice == v {
-				valid = true
-				break
-			}
-		}
+		valid := slices.Contains(validVoices, *s.Voice)
 		if !valid {
 			return fmt.Errorf("invalid voice %q, must be one of: %v", *s.Voice, validVoices)
 		}
@@ -88,13 +83,7 @@ func ValidateSession(s Session) error {
 	// Validate audio formats
 	if s.InputAudioFormat != nil {
 		validFormats := []string{"pcm16", "g711_ulaw", "g711_alaw"}
-		valid := false
-		for _, f := range validFormats {
-			if *s.InputAudioFormat == f {
-				valid = true
-				break
-			}
-		}
+		valid := slices.Contains(validFormats, *s.InputAudioFormat)
 		if !valid {
 			return fmt.Errorf("invalid input audio format %q, must be one of: %v", *s.InputAudioFormat, validFormats)
 		}
@@ -102,13 +91,7 @@ func ValidateSession(s Session) error {
 
 	if s.OutputAudioFormat != nil {
 		validFormats := []string{"pcm16", "g711_ulaw", "g711_alaw"}
-		valid := false
-		for _, f := range validFormats {
-			if *s.OutputAudioFormat == f {
-				valid = true
-				break
-			}
-		}
+		valid := slices.Contains(validFormats, *s.OutputAudioFormat)
 		if !valid {
 			return fmt.Errorf("invalid output audio format %q, must be one of: %v", *s.OutputAudioFormat, validFormats)
 		}
