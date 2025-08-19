@@ -1,7 +1,10 @@
 # Azure OpenAI Realtime Go Library
 
-[![Go Reference](https://pkg.go.dev/badge/github.com/enesunal-m/azrealtime.svg)](https://pkg.go.dev/github.com/enesunal-m/azrealtime)
+[![Build Status](https://github.com/enesunal-m/azrealtime/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/enesunal-m/azrealtime/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/enesunal-m/azrealtime/branch/main/graph/badge.svg)](https://codecov.io/gh/enesunal-m/azrealtime)
 [![Go Report Card](https://goreportcard.com/badge/github.com/enesunal-m/azrealtime)](https://goreportcard.com/report/github.com/enesunal-m/azrealtime)
+[![Go Reference](https://pkg.go.dev/badge/github.com/enesunal-m/azrealtime.svg)](https://pkg.go.dev/github.com/enesunal-m/azrealtime)
+[![Release](https://img.shields.io/github/release/enesunal-m/azrealtime.svg?style=flat-square)](https://github.com/enesunal-m/azrealtime/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 A production-ready Go client library for Azure OpenAI's GPT-4o Realtime API, enabling real-time bidirectional communication with OpenAI's most capable multimodal model.
