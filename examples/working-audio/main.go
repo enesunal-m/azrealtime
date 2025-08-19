@@ -83,8 +83,8 @@ func testWithAudioFile(ctx context.Context) error {
 		},
 		TurnDetection: &azrealtime.TurnDetection{
 			Type:              "server_vad",
-			CreateResponse:    true,  // Let server auto-create responses
-			InterruptResponse: true,  // Allow interrupting ongoing responses
+			CreateResponse:    true, // Let server auto-create responses
+			InterruptResponse: true, // Allow interrupting ongoing responses
 			Threshold:         0.5,
 			PrefixPaddingMS:   300,
 			SilenceDurationMS: 500, // Shorter for quicker response
@@ -107,7 +107,7 @@ func testWithAudioFile(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("decode error: %w", err)
 	}
-	log.Printf("Decoded PCM length: %d bytes (%.2f seconds)", 
+	log.Printf("Decoded PCM length: %d bytes (%.2f seconds)",
 		len(pcmData), float64(len(pcmData))/(2.0*SampleRate))
 
 	// Send audio and let server VAD handle detection and response
@@ -179,7 +179,7 @@ func setupEventHandlers(client *azrealtime.Client) {
 
 	client.OnResponseDone(func(ev azrealtime.ResponseDone) {
 		log.Printf("✅ Response done: %s (status: %s)", ev.Response.ID, ev.Response.Status)
-		fmt.Println("--- AI RESPONSE COMPLETE ---\n")
+		fmt.Println("--- AI RESPONSE COMPLETE ---")
 	})
 
 	// Text streaming - show response in real-time
@@ -191,7 +191,7 @@ func setupEventHandlers(client *azrealtime.Client) {
 	client.OnResponseTextDone(func(event azrealtime.ResponseTextDone) {
 		completeText := textAssembler.OnDone(event)
 		fmt.Printf("\n📝 [Complete text response: %d characters]\n", len(completeText))
-		
+
 		// Optionally show the complete text
 		if len(completeText) > 0 {
 			fmt.Printf("Full response: %s\n", completeText)
@@ -211,7 +211,7 @@ func setupEventHandlers(client *azrealtime.Client) {
 	client.OnResponseAudioDone(func(event azrealtime.ResponseAudioDone) {
 		pcmData := audioAssembler.OnDone(event.ResponseID)
 		log.Printf("\n🔊 Audio complete: %d bytes", len(pcmData))
-		
+
 		if len(pcmData) > 0 {
 			wavData := azrealtime.WAVFromPCM16Mono(pcmData, azrealtime.DefaultSampleRate)
 			filename := fmt.Sprintf("response_%s.wav", event.ResponseID)
@@ -219,7 +219,7 @@ func setupEventHandlers(client *azrealtime.Client) {
 				log.Printf("Failed to save audio: %v", err)
 			} else {
 				log.Printf("💾 Saved audio: %s", filename)
-				
+
 				// Try to play the audio automatically on macOS
 				if _, err := exec.Command("which", "afplay").Output(); err == nil {
 					log.Printf("🔊 Playing audio...")
