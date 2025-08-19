@@ -1,0 +1,5 @@
+coverage:
+  ignore:
+    - "examples/**"
+    - "cmd/**"
+    - "webrtc/**"
