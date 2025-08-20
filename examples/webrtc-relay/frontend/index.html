@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>WebRTC Azure Relay</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+
+        button {
+            padding: 15px 30px;
+            font-size: 16px;
+            margin: 10px;
+            cursor: pointer;
+        }
+
+        .success {
+            color: green;
+        }
+
+        .error {
+            color: red;
+        }
+
+        .info {
+            color: blue;
+        }
+
+        #log {
+            background: #f0f0f0;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 20px;
+            height: 400px;
+            overflow-y: auto;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+
+        .section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>🎤 WebRTC Azure Relay</h1>
+    <p>Real-time audio communication with Azure OpenAI via WebRTC relay.</p>
+
+    <div class="section">
+        <h3>Connection</h3>
+        <button id="connectBtn">Connect & Send Audio</button>
+        <button id="disconnectBtn" disabled>Disconnect</button>
+        <div id="status">Status: Disconnected</div>
+    </div>
+
+    <div class="section">
+        <h3>Session Configuration</h3>
+        <label for="voiceSelect">Voice:</label>
+        <select id="voiceSelect">
+            <option value="alloy">Alloy</option>
+            <option value="echo">Echo</option>
+            <option value="fable">Fable</option>
+            <option value="onyx">Onyx</option>
+            <option value="nova">Nova</option>
+            <option value="shimmer">Shimmer</option>
+        </select>
+        <br><br>
+        <label for="instructionsInput">Instructions:</label>
+        <textarea id="instructionsInput" rows="3"
+            cols="50">You are a helpful AI assistant. Be brief and conversational.</textarea>
+        <br><br>
+        <button id="updateSessionBtn" disabled>Update Session</button>
+    </div>
+
+    <div class="section">
+        <h3>💬 Conversation</h3>
+        <button onclick="document.getElementById('conversation').innerHTML = ''">Clear Conversation</button>
+        <button onclick="downloadConversation()">Download History</button>
+        <div id="conversation"
+            style="background: #f9f9f9; padding: 10px; border-radius: 5px; height: 200px; overflow-y: auto; margin-top: 10px; font-family: Arial, sans-serif;">
+        </div>
+    </div>
+
+    <div class="section">
+        <h3>🎙️ Audio Recordings</h3>
+        <button onclick="refreshAudioFiles()">Refresh</button>
+        <div id="audioFiles"
+            style="background: #f9f9f9; padding: 10px; border-radius: 5px; height: 150px; overflow-y: auto; margin-top: 10px;">
+            <p style="color: #666;">No audio files yet. Recordings will appear here after you connect.</p>
+        </div>
+    </div>
+
+    <div class="section">
+        <h3>Debug Log</h3>
+        <button onclick="document.getElementById('log').innerHTML = ''">Clear Log</button>
+        <div id="log"></div>
+    </div>
+
+    <script src="app.js"></script>
+    <script>
+        async function downloadConversation() {
+            try {
+                const response = await fetch('/conversation');
+                const data = await response.json();
+
+                const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `conversation_${new Date().toISOString()}.json`;
+                a.click();
+                URL.revokeObjectURL(url);
+
+                addLog('📥 Downloaded conversation history', 'success');
+            } catch (error) {
+                addLog('❌ Failed to download conversation: ' + error.message, 'error');
+            }
+        }
+
+        async function refreshAudioFiles() {
+            try {
+                const response = await fetch('/audio-files');
+                const files = await response.json();
+
+                const audioFilesDiv = document.getElementById('audioFiles');
+                if (files.length === 0) {
+                    audioFilesDiv.innerHTML = '<p style="color: #666;">No audio files found.</p>';
+                } else {
+                    audioFilesDiv.innerHTML = files.map(file => {
+                        const sizeMB = (file.size / 1024 / 1024).toFixed(2);
+                        const date = new Date(file.time).toLocaleString();
+                        return `
+                            <div style="margin: 5px 0; padding: 5px; background: white; border-radius: 3px;">
+                                <strong>${file.name}</strong> (${sizeMB} MB)
+                                <br><small>Created: ${date}</small>
+                                <br><a href="/audio/${file.name}" download style="text-decoration: none;">
+                                    📥 Download
+                                </a>
+                                <audio controls style="width: 100%; margin-top: 5px;">
+                                    <source src="/audio/${file.name}" type="audio/ogg">
+                                    Your browser does not support the audio element.
+                                </audio>
+                            </div>
+                        `;
+                    }).join('');
+                }
+            } catch (error) {
+                addLog('❌ Failed to load audio files: ' + error.message, 'error');
+            }
+        }
+
+        // Auto-refresh audio files every 5 seconds when connected
+        setInterval(() => {
+            if (connectBtn.disabled) { // Connected state
+                refreshAudioFiles();
+            }
+        }, 5000);
+    </script>
+</body>
+
+</html>
