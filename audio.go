@@ -148,7 +148,7 @@ func (c *Client) CreateConversationItem(ctx context.Context, item ConversationIt
 	}
 
 	payload := map[string]any{
-		"type": "conversation.item.create", 
+		"type": "conversation.item.create",
 		"item": item,
 	}
 	return c.send(ctx, payload)

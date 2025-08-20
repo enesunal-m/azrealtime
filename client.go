@@ -31,34 +31,34 @@ type Client struct {
 	closeOnce  sync.Once          // Ensures closedCh is only closed once
 
 	// Event handlers - these functions are called when corresponding events are received
-	handlerMu                                        sync.RWMutex                                               // Protects event handler fields
-	onError                                          func(ErrorEvent)                                           // Called for API errors
-	onSessionCreated                                 func(SessionCreated)                                       // Called when session is established
-	onSessionUpdated                                 func(SessionUpdated)                                       // Called when session config changes
-	onRateLimitsUpdated                              func(RateLimitsUpdated)                                    // Called for rate limit updates
-	onResponseTextDelta                              func(ResponseTextDelta)                                    // Called for streaming text responses
-	onResponseTextDone                               func(ResponseTextDone)                                     // Called when text response completes
-	onResponseAudioDelta                             func(ResponseAudioDelta)                                   // Called for streaming audio responses
-	onResponseAudioDone                              func(ResponseAudioDone)                                    // Called when audio response completes
-	onInputAudioBufferSpeechStarted                  func(InputAudioBufferSpeechStarted)                        // Called when user starts speaking
-	onInputAudioBufferSpeechStopped                  func(InputAudioBufferSpeechStopped)                        // Called when user stops speaking
-	onInputAudioBufferCommitted                      func(InputAudioBufferCommitted)                            // Called when audio buffer is committed
-	onInputAudioBufferCleared                        func(InputAudioBufferCleared)                              // Called when audio buffer is cleared
-	onConversationItemCreated                        func(ConversationItemCreated)                              // Called when conversation item is created
+	handlerMu                                          sync.RWMutex                                           // Protects event handler fields
+	onError                                            func(ErrorEvent)                                       // Called for API errors
+	onSessionCreated                                   func(SessionCreated)                                   // Called when session is established
+	onSessionUpdated                                   func(SessionUpdated)                                   // Called when session config changes
+	onRateLimitsUpdated                                func(RateLimitsUpdated)                                // Called for rate limit updates
+	onResponseTextDelta                                func(ResponseTextDelta)                                // Called for streaming text responses
+	onResponseTextDone                                 func(ResponseTextDone)                                 // Called when text response completes
+	onResponseAudioDelta                               func(ResponseAudioDelta)                               // Called for streaming audio responses
+	onResponseAudioDone                                func(ResponseAudioDone)                                // Called when audio response completes
+	onInputAudioBufferSpeechStarted                    func(InputAudioBufferSpeechStarted)                    // Called when user starts speaking
+	onInputAudioBufferSpeechStopped                    func(InputAudioBufferSpeechStopped)                    // Called when user stops speaking
+	onInputAudioBufferCommitted                        func(InputAudioBufferCommitted)                        // Called when audio buffer is committed
+	onInputAudioBufferCleared                          func(InputAudioBufferCleared)                          // Called when audio buffer is cleared
+	onConversationItemCreated                          func(ConversationItemCreated)                          // Called when conversation item is created
 	onConversationItemInputAudioTranscriptionCompleted func(ConversationItemInputAudioTranscriptionCompleted) // Called when audio transcription completes
-	onConversationItemInputAudioTranscriptionFailed func(ConversationItemInputAudioTranscriptionFailed)       // Called when audio transcription fails
-	onConversationItemTruncated                      func(ConversationItemTruncated)                            // Called when conversation item is truncated
-	onConversationItemDeleted                        func(ConversationItemDeleted)                              // Called when conversation item is deleted
-	onResponseCreated                                func(ResponseCreated)                                      // Called when response is created
-	onResponseDone                                   func(ResponseDone)                                         // Called when response is complete
-	onResponseOutputItemAdded                        func(ResponseOutputItemAdded)                              // Called when output item is added
-	onResponseOutputItemDone                         func(ResponseOutputItemDone)                               // Called when output item is complete
-	onResponseContentPartAdded                       func(ResponseContentPartAdded)                             // Called when content part is added
-	onResponseContentPartDone                        func(ResponseContentPartDone)                              // Called when content part is complete
-	onResponseFunctionCallArgumentsDelta             func(ResponseFunctionCallArgumentsDelta)                   // Called for streaming function arguments
-	onResponseFunctionCallArgumentsDone              func(ResponseFunctionCallArgumentsDone)                    // Called when function arguments are complete
-	onResponseAudioTranscriptDelta                   func(ResponseAudioTranscriptDelta)                         // Called for streaming audio transcript
-	onResponseAudioTranscriptDone                    func(ResponseAudioTranscriptDone)                          // Called when audio transcript is complete
+	onConversationItemInputAudioTranscriptionFailed    func(ConversationItemInputAudioTranscriptionFailed)    // Called when audio transcription fails
+	onConversationItemTruncated                        func(ConversationItemTruncated)                        // Called when conversation item is truncated
+	onConversationItemDeleted                          func(ConversationItemDeleted)                          // Called when conversation item is deleted
+	onResponseCreated                                  func(ResponseCreated)                                  // Called when response is created
+	onResponseDone                                     func(ResponseDone)                                     // Called when response is complete
+	onResponseOutputItemAdded                          func(ResponseOutputItemAdded)                          // Called when output item is added
+	onResponseOutputItemDone                           func(ResponseOutputItemDone)                           // Called when output item is complete
+	onResponseContentPartAdded                         func(ResponseContentPartAdded)                         // Called when content part is added
+	onResponseContentPartDone                          func(ResponseContentPartDone)                          // Called when content part is complete
+	onResponseFunctionCallArgumentsDelta               func(ResponseFunctionCallArgumentsDelta)               // Called for streaming function arguments
+	onResponseFunctionCallArgumentsDone                func(ResponseFunctionCallArgumentsDone)                // Called when function arguments are complete
+	onResponseAudioTranscriptDelta                     func(ResponseAudioTranscriptDelta)                     // Called for streaming audio transcript
+	onResponseAudioTranscriptDone                      func(ResponseAudioTranscriptDone)                      // Called when audio transcript is complete
 }
 
 // Dial establishes a WebSocket connection to the Azure OpenAI Realtime API.
@@ -683,7 +683,6 @@ func (c *Client) log(event string, fields map[string]any) {
 		c.cfg.Logger(event, fields)
 	}
 }
-
 
 func (c *Client) logError(event string, fields map[string]any) {
 	if c.cfg.StructuredLogger != nil {

@@ -99,27 +99,27 @@ type ResponseAudioDone struct {
 // InputAudioBufferSpeechStarted indicates the start of speech in the input audio buffer.
 // This event is generated when the server detects the beginning of speech from the user.
 type InputAudioBufferSpeechStarted struct {
-	Type    string `json:"type"`     // Always "input_audio_buffer.speech_started"
-	EventID string `json:"event_id"` // Unique identifier for this event
-	AudioStartMs int `json:"audio_start_ms"` // Milliseconds from the beginning of the input audio buffer
-	ItemID  string `json:"item_id"`  // The ID of the user message item that will be created
+	Type         string `json:"type"`           // Always "input_audio_buffer.speech_started"
+	EventID      string `json:"event_id"`       // Unique identifier for this event
+	AudioStartMs int    `json:"audio_start_ms"` // Milliseconds from the beginning of the input audio buffer
+	ItemID       string `json:"item_id"`        // The ID of the user message item that will be created
 }
 
 // InputAudioBufferSpeechStopped indicates the end of speech in the input audio buffer.
 // This event is generated when the server detects the end of speech from the user.
 type InputAudioBufferSpeechStopped struct {
-	Type    string `json:"type"`     // Always "input_audio_buffer.speech_stopped"
-	EventID string `json:"event_id"` // Unique identifier for this event
-	AudioEndMs int `json:"audio_end_ms"` // Milliseconds from the beginning of the input audio buffer
-	ItemID  string `json:"item_id"`  // The ID of the user message item that will be created
+	Type       string `json:"type"`         // Always "input_audio_buffer.speech_stopped"
+	EventID    string `json:"event_id"`     // Unique identifier for this event
+	AudioEndMs int    `json:"audio_end_ms"` // Milliseconds from the beginning of the input audio buffer
+	ItemID     string `json:"item_id"`      // The ID of the user message item that will be created
 }
 
 // InputAudioBufferCommitted indicates that the input audio buffer has been committed.
 type InputAudioBufferCommitted struct {
-	Type           string `json:"type"`            // Always "input_audio_buffer.committed"
-	EventID        string `json:"event_id"`        // Unique identifier for this event
+	Type           string `json:"type"`             // Always "input_audio_buffer.committed"
+	EventID        string `json:"event_id"`         // Unique identifier for this event
 	PreviousItemID string `json:"previous_item_id"` // The ID of the preceding item in the conversation
-	ItemID         string `json:"item_id"`         // The ID of the user message item that will be created
+	ItemID         string `json:"item_id"`          // The ID of the user message item that will be created
 }
 
 // InputAudioBufferCleared indicates that the input audio buffer has been cleared.
@@ -177,16 +177,16 @@ type ConversationItemDeleted struct {
 
 // ResponseCreated indicates that a response has been created.
 type ResponseCreated struct {
-	Type     string           `json:"type"`      // Always "response.created"
-	EventID  string           `json:"event_id"`  // Unique identifier for this event
-	Response ResponseObject   `json:"response"`  // The response resource
+	Type     string         `json:"type"`     // Always "response.created"
+	EventID  string         `json:"event_id"` // Unique identifier for this event
+	Response ResponseObject `json:"response"` // The response resource
 }
 
 // ResponseDone indicates that a response is complete.
 type ResponseDone struct {
-	Type     string         `json:"type"`      // Always "response.done"
-	EventID  string         `json:"event_id"`  // Unique identifier for this event
-	Response ResponseObject `json:"response"`  // The response resource
+	Type     string         `json:"type"`     // Always "response.done"
+	EventID  string         `json:"event_id"` // Unique identifier for this event
+	Response ResponseObject `json:"response"` // The response resource
 }
 
 // ResponseOutputItemAdded indicates that a new output item has been added to the response.

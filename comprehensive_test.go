@@ -264,7 +264,7 @@ func TestAllNewEventHandlers(t *testing.T) {
 		t.Run(testEvent.eventType, func(t *testing.T) {
 			// Dispatch the event
 			client.dispatch(envelope{Type: testEvent.eventType}, []byte(testEvent.jsonData))
-			
+
 			// Check if handler was called
 			if !eventsCalled[testEvent.checkKey] {
 				t.Errorf("Handler for %s was not called", testEvent.eventType)
@@ -312,19 +312,19 @@ func TestConversationDataStructures(t *testing.T) {
 		t.Run("ConversationItem_"+itemType, func(t *testing.T) {
 			testItem := item
 			testItem.Type = itemType
-			
+
 			// Should be able to marshal/unmarshal
 			data, err := json.Marshal(testItem)
 			if err != nil {
 				t.Errorf("Failed to marshal %s item: %v", itemType, err)
 			}
-			
+
 			var unmarshaled ConversationItem
 			err = json.Unmarshal(data, &unmarshaled)
 			if err != nil {
 				t.Errorf("Failed to unmarshal %s item: %v", itemType, err)
 			}
-			
+
 			if unmarshaled.Type != itemType {
 				t.Errorf("Type mismatch for %s: expected %s, got %s", itemType, itemType, unmarshaled.Type)
 			}
@@ -341,18 +341,18 @@ func TestConversationDataStructures(t *testing.T) {
 				Audio:      "base64audiodata",
 				Transcript: "Sample transcript",
 			}
-			
+
 			data, err := json.Marshal(part)
 			if err != nil {
 				t.Errorf("Failed to marshal %s content: %v", contentType, err)
 			}
-			
+
 			var unmarshaled ContentPart
 			err = json.Unmarshal(data, &unmarshaled)
 			if err != nil {
 				t.Errorf("Failed to unmarshal %s content: %v", contentType, err)
 			}
-			
+
 			if unmarshaled.Type != contentType {
 				t.Errorf("Type mismatch for %s: expected %s, got %s", contentType, contentType, unmarshaled.Type)
 			}

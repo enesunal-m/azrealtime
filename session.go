@@ -55,24 +55,24 @@ type TurnDetection struct {
 	// Default: 0.5. Only applicable for server_vad.
 	Threshold float64 `json:"threshold,omitempty"`
 
-	// PrefixPaddingMS is the duration of speech audio (in milliseconds) 
+	// PrefixPaddingMS is the duration of speech audio (in milliseconds)
 	// to include before the start of detected speech.
 	// Default: 300ms. Only applicable for server_vad.
 	PrefixPaddingMS int `json:"prefix_padding_ms,omitempty"`
 
-	// SilenceDurationMS is the duration of silence (in milliseconds) 
+	// SilenceDurationMS is the duration of silence (in milliseconds)
 	// to detect the end of speech.
 	// Lower values = quicker response but may cut off speech.
 	// Higher values = wait longer but more complete speech.
 	// Default: 200ms. Only applicable for server_vad.
 	SilenceDurationMS int `json:"silence_duration_ms,omitempty"`
 
-	// CreateResponse indicates whether the server will automatically 
+	// CreateResponse indicates whether the server will automatically
 	// create a response when VAD detects speech end.
 	// Default: true.
 	CreateResponse bool `json:"create_response,omitempty"`
 
-	// InterruptResponse indicates whether the server will automatically 
+	// InterruptResponse indicates whether the server will automatically
 	// interrupt any ongoing response when a VAD start event occurs.
 	// Default: true.
 	InterruptResponse bool `json:"interrupt_response,omitempty"`
@@ -133,12 +133,12 @@ func ValidateSession(s Session) error {
 		if s.TurnDetection.Type == "" {
 			return errors.New("turn detection type cannot be empty")
 		}
-		
+
 		validTypes := []string{"server_vad", "semantic_vad"}
 		if !slices.Contains(validTypes, s.TurnDetection.Type) {
 			return fmt.Errorf("invalid turn detection type %q, must be one of: %v", s.TurnDetection.Type, validTypes)
 		}
-		
+
 		// Server VAD specific validations
 		if s.TurnDetection.Type == "server_vad" {
 			if s.TurnDetection.Threshold < 0.0 || s.TurnDetection.Threshold > 1.0 {
@@ -151,7 +151,7 @@ func ValidateSession(s Session) error {
 				return fmt.Errorf("silence duration must be non-negative, got %d", s.TurnDetection.SilenceDurationMS)
 			}
 		}
-		
+
 		// Semantic VAD specific validations
 		if s.TurnDetection.Type == "semantic_vad" {
 			if s.TurnDetection.Eagerness != "" {

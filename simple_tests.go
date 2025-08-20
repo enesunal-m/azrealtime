@@ -30,7 +30,7 @@ func TestNewMethods_Validation(t *testing.T) {
 
 		// Test content validation
 		err = client.CreateConversationItem(context.Background(), ConversationItem{
-			Type: "message",
+			Type:    "message",
 			Content: []ContentPart{{Text: "hello"}}, // Missing Type
 		})
 		if err == nil || !strings.Contains(err.Error(), "content[0].type is required") {
@@ -291,7 +291,7 @@ func TestResponseUsageStructures(t *testing.T) {
 
 func TestAllNewEventTypes(t *testing.T) {
 	client := &Client{}
-	
+
 	// Test that all new event handlers can be registered without issues
 	eventHandlers := []func(){
 		func() { client.OnInputAudioBufferSpeechStarted(func(InputAudioBufferSpeechStarted) {}) },
@@ -299,8 +299,12 @@ func TestAllNewEventTypes(t *testing.T) {
 		func() { client.OnInputAudioBufferCommitted(func(InputAudioBufferCommitted) {}) },
 		func() { client.OnInputAudioBufferCleared(func(InputAudioBufferCleared) {}) },
 		func() { client.OnConversationItemCreated(func(ConversationItemCreated) {}) },
-		func() { client.OnConversationItemInputAudioTranscriptionCompleted(func(ConversationItemInputAudioTranscriptionCompleted) {}) },
-		func() { client.OnConversationItemInputAudioTranscriptionFailed(func(ConversationItemInputAudioTranscriptionFailed) {}) },
+		func() {
+			client.OnConversationItemInputAudioTranscriptionCompleted(func(ConversationItemInputAudioTranscriptionCompleted) {})
+		},
+		func() {
+			client.OnConversationItemInputAudioTranscriptionFailed(func(ConversationItemInputAudioTranscriptionFailed) {})
+		},
 		func() { client.OnConversationItemTruncated(func(ConversationItemTruncated) {}) },
 		func() { client.OnConversationItemDeleted(func(ConversationItemDeleted) {}) },
 		func() { client.OnResponseCreated(func(ResponseCreated) {}) },
